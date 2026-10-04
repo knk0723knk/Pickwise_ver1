@@ -1,17 +1,17 @@
 /* "예시로 체험하기" 데이터 (담당: 조원2)
    - 화면 1의 예시 버튼을 누르면 이 내용이 Pickwise.state 에 채워진다.
-   - 기준 id(budget 등)는 data/criteria.js 가 만들어지면 같은 id로 맞춘다.
+   - 기준 id·icon은 data/criteria.js 의 여행 기준과 같아야 한다.
    - 설명 문장은 일반적으로 알려진 내용만 적는다. */
 Pickwise.data.example = {
   "topic": "그리스 vs 이집트, 이번 여름휴가 어디로 갈까?",
   "category": "travel",
   "options": ["그리스", "이집트"],
   "criteria": [
-    { "id": "budget",    "name": "예산",        "icon": "budget",    "custom": false },
-    { "id": "weather",   "name": "날씨",        "icon": "weather",   "custom": false },
-    { "id": "sights",    "name": "관광·볼거리", "icon": "sights",    "custom": false },
-    { "id": "food",      "name": "음식",        "icon": "food",      "custom": false },
-    { "id": "transport", "name": "이동 편의성", "icon": "transport", "custom": false }
+    { "id": "budget",    "name": "예산",        "icon": "wallet",   "custom": false },
+    { "id": "weather",   "name": "날씨",        "icon": "sun",      "custom": false },
+    { "id": "sights",    "name": "관광·볼거리", "icon": "camera",   "custom": false },
+    { "id": "food",      "name": "음식",        "icon": "utensils", "custom": false },
+    { "id": "transport", "name": "이동 편의성", "icon": "bus",      "custom": false }
   ],
   "weights": { "budget": 30, "weather": 25, "sights": 20, "food": 15, "transport": 10 },
   "info": {

@@ -72,6 +72,7 @@ pickwise/
 │  └─ screen1.css ~ screen6.css  ← 화면별 스타일 (각 화면 담당자)
 ├─ js/
 │  ├─ app.js             ← 화면 전환, 뒤로가기, 진행 표시, 공통 상태 (조원1)
+│  ├─ icons.js           ← 공통 아이콘(Pickwise.icon) + 공통 도구(Pickwise.josa 조사 붙이기, Pickwise.esc) (조원1)
 │  ├─ storage.js         ← localStorage 저장/불러오기 (조원8)
 │  ├─ screen1-decision.js  ← 결정 입력 + 주제 분류 (조원2)
 │  ├─ screen2-criteria.js  ← 기준 선택·추천·직접 추가 (조원3)
@@ -139,7 +140,7 @@ pickwise/
 
 | 조원 | 담당 기능 | 파일 |
 |------|-----------|------|
-| 1 | 공통 뼈대: 화면 전환·**모든 화면 뒤로가기**·진행 표시·공통 디자인(주황)·반응형 | `index.html`, `js/app.js`, `css/common.css` |
+| 1 | 공통 뼈대: 화면 전환·**모든 화면 뒤로가기**·진행 표시·공통 디자인(주황)·반응형·공통 아이콘 | `index.html`, `js/app.js`, `js/icons.js`, `css/common.css` |
 | 2 | ① 결정 입력: 주제·선택지 A/B 입력, 선택지 추가(최대 4개), 주제 → 카테고리 자동 분류, **"예시로 체험하기" 버튼** | `screen1-decision.js`, `screen1.css`, `data/topics.js`, `data/example.js` |
 | 3 | ② 기준 선택: 카테고리별 추천 기준, "이런 기준도 고려해보세요", **기준 직접 추가** | `screen2-criteria.js`, `screen2.css`, `data/criteria.js` |
 | 4 | ③ 중요도 설정: 슬라이더, 합계 100% 자동 맞춤, 기준 삭제 | `screen3-weights.js`, `screen3.css` |

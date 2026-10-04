@@ -1,0 +1,59 @@
+/* 화면 3 · 중요도 설정 (담당: 조원4) */
+
+.s3-head { display: flex; flex-direction: column; gap: 6px; }
+.s3-head h2 { font-size: 20px; font-weight: 800; letter-spacing: -.03em; margin: 0; }
+.s3-head p { margin: 0; color: var(--muted); font-size: 14px; }
+.s3-head strong { color: var(--fg); }
+
+.s3-list { display: flex; flex-direction: column; gap: 8px; }
+.s3-row {
+  display: grid; grid-template-columns: 22px minmax(64px, 6.5em) minmax(0, 1fr) 3.2em 26px;
+  align-items: center; gap: 8px; padding: 10px 10px 10px 12px;
+  border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+}
+.s3-icon { color: var(--accent-strong); display: grid; }
+.s3-name { font-weight: 600; font-size: 14px; line-height: 1.25; word-break: keep-all; }
+.s3-val { font-weight: 800; font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 슬라이더: 채워진 부분은 주황 */
+.s3-range {
+  -webkit-appearance: none; appearance: none; width: 100%; min-width: 0; height: 24px; margin: 0;
+  background: transparent; cursor: pointer;
+}
+.s3-range::-webkit-slider-runnable-track {
+  height: 6px; border-radius: 3px;
+  background: linear-gradient(to right, var(--accent) 0 var(--p), var(--line) var(--p) 100%);
+}
+.s3-range::-moz-range-track { height: 6px; border-radius: 3px; background: var(--line); }
+.s3-range::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+.s3-range::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; margin-top: -7px;
+  background: var(--card); border: 2px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.15);
+}
+.s3-range::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--card); border: 2px solid var(--accent);
+}
+.s3-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+
+.s3-del {
+  width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--line); color: var(--muted);
+  display: grid; place-items: center; cursor: pointer;
+}
+.s3-del:hover:not(:disabled) { background: var(--danger); color: #fff; }
+.s3-del:disabled { opacity: .35; cursor: default; }
+
+.s3-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: -8px; }
+.s3-top { margin: 0; font-size: 13.5px; color: var(--muted); flex: 1; min-width: 0; }
+.s3-top strong { color: var(--fg); }
+.s3-total {
+  background: var(--accent-soft); color: var(--accent-strong); border: 1px solid var(--accent-line);
+  border-radius: 999px; padding: 3px 12px; font-size: 13px; font-weight: 600; white-space: nowrap;
+}
+.s3-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: -8px; }
+
+@media (max-width: 400px) {
+  /* 좁은 휴대폰: 이름 한 줄, 슬라이더 아래 줄 */
+  .s3-row { grid-template-columns: 22px minmax(0, 1fr) 3.2em 26px; row-gap: 4px; }
+  .s3-range { grid-column: 1 / -1; grid-row: 2; }
+}
