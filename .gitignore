@@ -1,0 +1,29 @@
+# ── 회사 내부 자료·실명 포함 문서 (GitHub에 올리지 않음) ──
+docs/기획안.pdf
+*.pdf
+*.pptx
+*.ppt
+*.docx
+*.xlsx
+
+# ── 비밀 값 (API 키 등) ──
+.env
+.env.*
+*.key
+*.pem
+secrets*
+
+# ── Vercel 로컬 설정 ──
+.vercel/
+
+# ── Claude Code 개인 설정 ──
+.claude/settings.local.json
+
+# ── 운영체제·편집기 임시 파일 ──
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*
+*.tmp
+.vscode/
+.idea/
