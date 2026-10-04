@@ -18,6 +18,7 @@ secrets*
 
 # ── Claude Code 개인 설정 ──
 .claude/settings.local.json
+.claude/launch.json
 
 # ── 운영체제·편집기 임시 파일 ──
 .DS_Store

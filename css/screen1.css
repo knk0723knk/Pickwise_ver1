@@ -1,0 +1,30 @@
+/* 화면 1 · 결정 입력 (담당: 조원2) */
+
+.s1-intro { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.s1-intro svg { color: var(--accent); }
+.s1-intro h2 { font-size: 21px; font-weight: 800; letter-spacing: -.03em; margin: 4px 0 0; text-wrap: balance; }
+.s1-intro p { margin: 0; color: var(--muted); font-size: 14px; text-wrap: balance; }
+
+.s1-demo {
+  margin-top: 8px; border: 1px dashed var(--accent); background: var(--accent-soft); color: var(--accent-strong);
+  border-radius: 999px; padding: 8px 16px; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.s1-demo:hover { border-style: solid; }
+.s1-demo-sub { font-weight: 500; color: var(--muted); font-size: 12.5px; }
+
+.s1-detect { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; color: var(--muted); min-height: 26px; }
+
+.s1-options { display: flex; flex-direction: column; gap: 8px; }
+.s1-opt { display: flex; align-items: center; gap: 8px; }
+.s1-letter {
+  width: 34px; height: 50px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-strong);
+  display: grid; place-items: center; font-weight: 800; flex: none;
+}
+.s1-opt .field { flex: 1; min-width: 0; }
+.s1-del {
+  width: 26px; height: 26px; border-radius: 50%; border: 0; background: var(--line); color: var(--muted);
+  display: grid; place-items: center; cursor: pointer; flex: none;
+}
+.s1-del:hover:not(:disabled) { background: var(--danger); color: #fff; }
+.s1-del:disabled { opacity: .35; cursor: default; }

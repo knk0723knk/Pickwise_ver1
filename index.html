@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pickwise · 내 기준으로 고르는 의사결정</title>
+  <meta name="description" content="내 기준과 중요도로 선택지를 비교하고, 왜 이 선택이 나은지까지 보여주는 의사결정 도우미">
+  <meta name="theme-color" content="#FF5A1F">
+
+  <!-- 공통 디자인 → 화면별 디자인 (각 화면 담당자가 자기 css 파일만 고침) -->
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/screen1.css">
+</head>
+<body>
+  <!-- 이 파일은 조원1만 고칩니다. 화면 내용은 js/screenN-*.js 가 그립니다. -->
+  <main class="screen" aria-labelledby="pw-title">
+    <header class="topbar">
+      <button class="back" type="button" data-pw="back" aria-label="이전 단계로">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="step-no" data-pw="stepNo">1</span>
+      <h1 class="step-title" id="pw-title" data-pw="title">결정 입력</h1>
+      <span class="logo" aria-label="Pickwise"><span class="slash" aria-hidden="true">//</span>Pick<span class="wise">wise</span></span>
+    </header>
+
+    <div class="progress" data-pw="progress" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="progress-label" data-pw="progressLabel">1 / 6 단계</div>
+
+    <section class="screen-body" data-pw="body"></section>
+
+    <p class="msg" data-pw="msg" role="alert"></p>
+    <button class="next" type="button" data-pw="next">
+      <span data-pw="nextLabel">다음</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </main>
+
+  <div class="toast" data-pw="toast" role="status" hidden></div>
+
+  <!-- 불러오는 순서가 중요합니다: 뼈대 → 데이터 → 계산 → 화면 -->
+  <script src="js/app.js"></script>
+  <script src="data/topics.js"></script>
+  <script src="data/example.js"></script>
+  <script src="js/screen1-decision.js"></script>
+
+  <noscript>Pickwise는 JavaScript를 켜야 사용할 수 있어요.</noscript>
+</body>
+</html>
