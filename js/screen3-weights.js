@@ -75,19 +75,29 @@
       drawTop(sh);
     }
 
+    /* 이름 목록을 문장으로: ["예산"] → "예산을", ["예산","비행시간"] → "예산과 비행시간을", 3개 이상 → "예산, 날씨, 음식을" */
+    function joinNames(names) {
+      if (names.length === 1) return Pickwise.josa(names[0], '을를');
+      if (names.length === 2) return Pickwise.josa(names[0], '과와') + ' ' + Pickwise.josa(names[1], '을를');
+      return names.slice(0, -1).join(', ') + ', ' + Pickwise.josa(names[names.length - 1], '을를');
+    }
+
     function drawTop(sh) {
       var s = Pickwise.state;
       var vals = s.criteria.map(function (c) { return s.weights[c.id]; });
-      var top = s.criteria.slice().sort(function (a, b) { return s.weights[b.id] - s.weights[a.id]; })[0];
+      var max = Math.max.apply(null, vals);
+      var tops = s.criteria.filter(function (c) { return s.weights[c.id] === max; });   // 점수가 같은 1위는 모두
       var el2 = q('top');
       el2.classList.remove('warn');
-      if (Math.max.apply(null, vals) === 0) {
+      if (max === 0) {
         el2.classList.add('warn');
         el2.textContent = '모든 기준이 0점이에요. 중요한 기준을 1점 이상으로 올려 주세요.';
-      } else if (vals.every(function (v) { return v === vals[0]; })) {
+      } else if (tops.length === s.criteria.length) {
         el2.innerHTML = '지금은 모든 기준을 <strong>똑같이</strong> 중요하게 보고 있어요. 차이를 두면 결과가 더 선명해져요.';
       } else {
-        el2.innerHTML = '지금은 <strong>' + esc(Pickwise.josa(top.name, '을를')) + '</strong> 가장 중요하게 보고 있어요 (비중 ' + sh[top.id] + '%).';
+        var names = tops.map(function (c) { return c.name; });
+        var pct = tops.length === 1 ? '비중 ' + sh[tops[0].id] + '%' : '각각 ' + max + '점';
+        el2.innerHTML = '지금은 <strong>' + esc(joinNames(names)) + '</strong> 가장 중요하게 보고 있어요 (' + pct + ').';
       }
     }
 
