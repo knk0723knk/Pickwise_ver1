@@ -13,7 +13,7 @@ Pickwise.data.example = {
     { "id": "food",      "name": "음식",        "icon": "utensils", "custom": false },
     { "id": "transport", "name": "이동 편의성", "icon": "bus",      "custom": false }
   ],
-  "weights": { "budget": 30, "weather": 25, "sights": 20, "food": 15, "transport": 10 },
+  "weights": { "budget": 10, "weather": 8, "sights": 7, "food": 5, "transport": 3 },
   "info": {
     "그리스": "산토리니와 아테네 유적이 유명하고, 여름 날씨가 맑고 좋다. 다만 성수기라 물가와 숙소비가 비싼 편이다. 해산물과 지중해 음식이 맛있다.",
     "이집트": "피라미드와 고대 유적 등 볼거리가 풍부하고 물가가 저렴한 편이다. 여름에는 매우 덥고, 도시 간 이동 시간이 긴 편이다."

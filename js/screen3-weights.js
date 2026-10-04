@@ -1,14 +1,15 @@
 /* ============================================================
    화면 3 · 중요도 설정 (담당: 조원4)
-   - 기준별 슬라이더, 합계는 항상 100%
-   - 하나를 올리면 나머지가 원래 비율대로 줄어든다
+   - 기준마다 0~10점 슬라이더 (서로 영향을 주지 않음)
+   - 옆의 (%)는 전체 중 비중: 내 점수 ÷ 모든 점수 합 → 자동 계산해서 보여주기만 함
    - 기준 삭제(최소 2개), "기준 추가하기" → 2번 화면으로
-   - 결과: state.weights = { 기준id: 중요도% }
+   - 결과: state.weights = { 기준id: 0~10 }  (점수 계산 때 비중으로 바꿔 씀)
    ============================================================ */
 (function () {
   var MIN_CRITERIA = 2;
+  var MAX = 10, DEFAULT = 5;
 
-  /* 숫자 목록을 정수로 반올림하되 합계가 정확히 total 이 되게 (가장 큰 나머지 방식) */
+  /* 정수 목록을 합계가 정확히 total 이 되게 반올림 (가장 큰 나머지 방식) */
   function roundTo(values, total) {
     var floors = values.map(Math.floor);
     var left = total - floors.reduce(function (a, b) { return a + b; }, 0);
@@ -18,57 +19,40 @@
     return floors;
   }
 
-  /* 기준 목록이 바뀌었을 때 중요도를 다시 100%로 맞춘다
-     - 새 기준은 1/n 만큼, 기존 기준은 남은 몫을 원래 비율대로 */
-  function normalize(state) {
+  /* 화면 표시용 비중(%) — 합계 100이 되게 반올림 */
+  function shares(state) {
     var ids = state.criteria.map(function (c) { return c.id; });
-    var old = state.weights || {};
-    var n = ids.length;
-    if (!n) { state.weights = {}; return; }
-    var newIds = ids.filter(function (id) { return typeof old[id] !== 'number'; });
-    var keep = ids.filter(function (id) { return typeof old[id] === 'number'; });
-    var share = 100 / n;
-    var rest = 100 - share * newIds.length;
-    var keepSum = keep.reduce(function (a, id) { return a + old[id]; }, 0);
-    var raw = ids.map(function (id) {
-      if (newIds.indexOf(id) > -1) return share;
-      return keepSum > 0 ? old[id] * rest / keepSum : rest / keep.length;
-    });
-    var rounded = roundTo(raw, 100);
-    state.weights = {};
-    ids.forEach(function (id, i) { state.weights[id] = rounded[i]; });
+    var sum = ids.reduce(function (a, id) { return a + state.weights[id]; }, 0);
+    var out = {};
+    if (!sum) { ids.forEach(function (id) { out[id] = 0; }); return out; }
+    var r = roundTo(ids.map(function (id) { return state.weights[id] * 100 / sum; }), 100);
+    ids.forEach(function (id, i) { out[id] = r[i]; });
+    return out;
   }
 
-  /* id 하나를 value 로 바꾸고 나머지를 비율대로 조정 */
-  function setWeight(state, id, value) {
-    var ids = state.criteria.map(function (c) { return c.id; });
-    var others = ids.filter(function (x) { return x !== id; });
-    var remain = 100 - value;
-    var otherSum = others.reduce(function (a, x) { return a + state.weights[x]; }, 0);
-    var raw = others.map(function (x) {
-      return otherSum > 0 ? state.weights[x] * remain / otherSum : remain / others.length;
+  /* 새로 추가된 기준은 5점, 빠진 기준은 지운다 */
+  function sync(state) {
+    var w = {};
+    state.criteria.forEach(function (c) {
+      var v = state.weights && state.weights[c.id];
+      w[c.id] = typeof v === 'number' && v >= 0 && v <= MAX ? v : DEFAULT;
     });
-    var rounded = roundTo(raw, remain);
-    state.weights[id] = value;
-    others.forEach(function (x, i) { state.weights[x] = rounded[i]; });
+    state.weights = w;
   }
 
   function render(el, state) {
     var esc = Pickwise.esc, icon = Pickwise.icon;
-    normalize(state);
+    sync(state);
 
     el.innerHTML =
       '<div class="s3-head">' +
         '<h2>무엇이 더 중요한가요?</h2>' +
-        '<p>선택한 기준의 중요도를 조절해 주세요. 하나를 올리면 나머지가 자동으로 줄어서 <strong>합계는 항상 100%</strong>예요.</p>' +
+        '<p>기준마다 얼마나 중요한지 <strong>0~10점</strong>으로 정해 주세요. 괄호 안의 비중(%)은 다른 기준과 비교해 자동으로 계산돼요.</p>' +
       '</div>' +
       '<div class="s3-list" data-s3="list"></div>' +
-      '<div class="s3-foot">' +
-        '<p class="s3-top" data-s3="top" aria-live="polite"></p>' +
-        '<span class="s3-total">합계 <strong>100%</strong></span>' +
-      '</div>' +
+      '<p class="s3-top" data-s3="top" aria-live="polite"></p>' +
       '<div class="s3-actions">' +
-        '<button type="button" class="pill-btn" data-s3="equal">' + icon('refresh', 14) + '똑같이 나누기</button>' +
+        '<button type="button" class="pill-btn" data-s3="equal">' + icon('refresh', 14) + '모두 5점으로</button>' +
         '<button type="button" class="pill-btn" data-s3="add">' + icon('plus', 14) + '기준 추가하기</button>' +
       '</div>';
 
@@ -78,46 +62,59 @@
       var s = Pickwise.state;
       var canDelete = s.criteria.length > MIN_CRITERIA;
       q('list').innerHTML = s.criteria.map(function (c) {
-        var w = s.weights[c.id];
-        return '<div class="s3-row" data-row="' + esc(c.id) + '">' +
+        var id = esc(c.id), w = s.weights[c.id];
+        return '<div class="s3-row">' +
           '<span class="s3-icon">' + icon(c.icon, 18) + '</span>' +
-          '<label class="s3-name" for="s3-w-' + esc(c.id) + '">' + esc(c.name) + '</label>' +
-          '<input class="s3-range" id="s3-w-' + esc(c.id) + '" type="range" min="0" max="100" step="1" value="' + w + '" ' +
-            'data-w="' + esc(c.id) + '" style="--p:' + w + '%" aria-valuetext="' + w + '%">' +
-          '<output class="s3-val" data-val="' + esc(c.id) + '">' + w + '%</output>' +
-          '<button type="button" class="s3-del" data-del="' + esc(c.id) + '" aria-label="' + esc(c.name) + ' 기준 빼기"' + (canDelete ? '' : ' disabled') + '>' + icon('x', 12) + '</button>' +
+          '<label class="s3-name" for="s3-w-' + id + '">' + esc(c.name) + '</label>' +
+          '<input class="s3-range" id="s3-w-' + id + '" type="range" min="0" max="' + MAX + '" step="1" value="' + w + '" data-w="' + id + '">' +
+          '<span class="s3-val"><output data-val="' + id + '"></output><small data-share="' + id + '"></small></span>' +
+          '<button type="button" class="s3-del" data-del="' + id + '" aria-label="' + esc(c.name) + ' 기준 빼기"' + (canDelete ? '' : ' disabled') + '>' + icon('x', 12) + '</button>' +
         '</div>';
       }).join('');
-      drawTop();
+      refresh();
     }
 
-    /* 슬라이더를 움직이는 중에는 다시 그리지 않고 값만 바꾼다 (끌기가 끊기지 않게) */
-    function refreshValues() {
-      var s = Pickwise.state;
+    /* 슬라이더를 끄는 중에는 다시 그리지 않고 숫자만 바꾼다 (끌기가 끊기지 않게) */
+    function refresh() {
+      var s = Pickwise.state, sh = shares(s);
       s.criteria.forEach(function (c) {
         var w = s.weights[c.id];
         var r = el.querySelector('[data-w="' + c.id + '"]');
+        if (r) {
+          r.value = w;
+          r.style.setProperty('--p', (w * 100 / MAX) + '%');
+          r.setAttribute('aria-valuetext', w + '점, 비중 ' + sh[c.id] + '%');
+        }
         var v = el.querySelector('[data-val="' + c.id + '"]');
-        if (r) { r.value = w; r.style.setProperty('--p', w + '%'); r.setAttribute('aria-valuetext', w + '%'); }
-        if (v) v.textContent = w + '%';
+        if (v) v.textContent = w + '점';
+        var p = el.querySelector('[data-share="' + c.id + '"]');
+        if (p) p.textContent = '(' + sh[c.id] + '%)';
       });
-      drawTop();
+      drawTop(sh);
     }
 
-    function drawTop() {
+    function drawTop(sh) {
       var s = Pickwise.state;
+      var vals = s.criteria.map(function (c) { return s.weights[c.id]; });
       var top = s.criteria.slice().sort(function (a, b) { return s.weights[b.id] - s.weights[a.id]; })[0];
-      var allSame = s.criteria.every(function (c) { return Math.abs(s.weights[c.id] - s.weights[top.id]) <= 1; });
-      q('top').innerHTML = allSame
-        ? '지금은 모든 기준을 <strong>비슷하게</strong> 중요하게 보고 있어요.'
-        : '지금은 <strong>' + esc(Pickwise.josa(top.name, '을를')) + '</strong> 가장 중요하게 보고 있어요 (' + s.weights[top.id] + '%).';
+      var el2 = q('top');
+      el2.classList.remove('warn');
+      if (Math.max.apply(null, vals) === 0) {
+        el2.classList.add('warn');
+        el2.textContent = '모든 기준이 0점이에요. 중요한 기준을 1점 이상으로 올려 주세요.';
+      } else if (vals.every(function (v) { return v === vals[0]; })) {
+        el2.innerHTML = '지금은 모든 기준을 <strong>똑같이</strong> 중요하게 보고 있어요. 차이를 두면 결과가 더 선명해져요.';
+      } else {
+        el2.innerHTML = '지금은 <strong>' + esc(Pickwise.josa(top.name, '을를')) + '</strong> 가장 중요하게 보고 있어요 (비중 ' + sh[top.id] + '%).';
+      }
     }
 
     q('list').addEventListener('input', function (e) {
       var id = e.target.getAttribute('data-w');
       if (!id) return;
-      setWeight(Pickwise.state, id, +e.target.value);
-      refreshValues();
+      Pickwise.state.weights[id] = +e.target.value;
+      Pickwise.setMessage('');
+      refresh();
     });
 
     q('list').addEventListener('click', function (e) {
@@ -127,14 +124,14 @@
       var id = b.getAttribute('data-del');
       s.criteria = s.criteria.filter(function (c) { return c.id !== id; });
       delete s.weights[id];
-      normalize(s);
       drawList();
     });
 
     q('equal').addEventListener('click', function () {
-      Pickwise.state.weights = {};
-      normalize(Pickwise.state);
-      refreshValues();
+      var s = Pickwise.state;
+      s.criteria.forEach(function (c) { s.weights[c.id] = DEFAULT; });
+      Pickwise.setMessage('');
+      refresh();
     });
 
     q('add').addEventListener('click', function () { Pickwise.back(); });
@@ -143,10 +140,8 @@
   }
 
   function validate(state) {
-    var sum = state.criteria.reduce(function (a, c) { return a + (state.weights[c.id] || 0); }, 0);
-    if (sum !== 100) return '중요도 합계가 100%가 아니에요. "똑같이 나누기"를 눌러 주세요.';
-    var allZero = state.criteria.filter(function (c) { return state.weights[c.id] > 0; }).length === 0;
-    if (allZero) return '중요한 기준을 하나 이상 골라 주세요.';
+    var anyOn = state.criteria.some(function (c) { return state.weights[c.id] > 0; });
+    if (!anyOn) return '모든 기준이 0점이에요. 중요한 기준을 1점 이상으로 올려 주세요.';
     return '';
   }
 
