@@ -19,5 +19,6 @@ Pickwise.data.example = {
     "이집트": "피라미드와 고대 유적 등 볼거리가 풍부하고 물가가 저렴한 편이다. 여름에는 매우 덥고, 도시 간 이동 시간이 긴 편이다."
   },
   "ratings": {},
+  "manual": {},
   "attachments": []
 };

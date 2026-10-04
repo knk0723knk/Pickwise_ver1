@@ -9,26 +9,8 @@
   var MIN_CRITERIA = 2;
   var MAX = 10, DEFAULT = 5;
 
-  /* 정수 목록을 합계가 정확히 total 이 되게 반올림 (가장 큰 나머지 방식) */
-  function roundTo(values, total) {
-    var floors = values.map(Math.floor);
-    var left = total - floors.reduce(function (a, b) { return a + b; }, 0);
-    var order = values.map(function (v, i) { return { i: i, r: v - Math.floor(v) }; })
-      .sort(function (a, b) { return b.r - a.r; });
-    for (var k = 0; k < left; k++) floors[order[k % order.length].i] += 1;
-    return floors;
-  }
-
-  /* 화면 표시용 비중(%) — 합계 100이 되게 반올림 */
-  function shares(state) {
-    var ids = state.criteria.map(function (c) { return c.id; });
-    var sum = ids.reduce(function (a, id) { return a + state.weights[id]; }, 0);
-    var out = {};
-    if (!sum) { ids.forEach(function (id) { out[id] = 0; }); return out; }
-    var r = roundTo(ids.map(function (id) { return state.weights[id] * 100 / sum; }), 100);
-    ids.forEach(function (id, i) { out[id] = r[i]; });
-    return out;
-  }
+  /* 화면 표시용 비중(%) — 계산은 점수 엔진(scoring.js)과 같은 방식을 쓴다 */
+  function shares(state) { return Pickwise.scoring.shares(state.criteria, state.weights); }
 
   /* 새로 추가된 기준은 5점, 빠진 기준은 지운다 */
   function sync(state) {

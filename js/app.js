@@ -30,7 +30,8 @@ window.Pickwise = (function () {
       criteria: [],        // [{ id, name, icon, custom }]
       weights: {},         // { 기준id: 중요도% } 합계 100
       info: {},            // { 선택지이름: 설명 }
-      ratings: {},         // { 선택지이름: { 기준id: 1~5 } }
+      ratings: {},         // { 선택지이름: { 기준id: 1~5 또는 null(모름) } }
+      manual: {},          // { 선택지이름: { 기준id: true } } 사용자가 직접 고른 별점 (자동 제안이 덮어쓰지 않음)
       attachments: []      // [{ option, name, size, type }] 파일 이름만
     };
   }
