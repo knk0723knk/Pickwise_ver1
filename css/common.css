@@ -131,7 +131,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .field input:focus-visible, .field textarea:focus-visible { outline: none; }
 
 .toast {
-  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  position: fixed; left: 50%; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); /* 다음 버튼을 가리지 않게 */
   transform: translateX(-50%); background: var(--fg); color: var(--card);
   padding: 12px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100% - 32px);
   box-shadow: 0 8px 24px rgba(0,0,0,.2); z-index: 10;
