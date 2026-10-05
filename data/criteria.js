@@ -159,7 +159,7 @@ Pickwise.data.criteria = {
       "maximum_renewals",
       "renewal_months"
      ],
-     "message": "관련 원자료와 파생값의 중복 가중에 유의해 주세요."
+     "message": "거주기간·재계약·연장기간은 계약기간으로 계산한 값이에요. 함께 고르면 기간이 여러 번 반영돼요."
     }
    ],
    "next": [
@@ -312,7 +312,7 @@ Pickwise.data.criteria = {
       "per_person_support_cap",
       "per_person_net_principal"
      ],
-     "message": "관련 원자료와 파생값의 중복 가중에 유의해 주세요."
+     "message": "개인 지원한도·개인 지원원금은 전체 지원한도를 나눠 계산한 값이에요. 함께 고르면 지원 금액이 여러 번 반영돼요."
     }
    ],
    "next": [
@@ -456,7 +456,7 @@ Pickwise.data.criteria = {
       "wireless_web_duration",
       "battery_capacity"
      ],
-     "message": "재생시간·웹 사용시간·배터리 용량은 관련성이 있지만 시험 조건과 의미가 달라요. 중복 가중에 유의해 주세요."
+     "message": "배터리·웹 사용시간·배터리 용량은 모두 배터리 성능과 관련 있어요. 함께 고르면 배터리가 여러 번 반영돼요."
     }
    ],
    "next": [
@@ -598,7 +598,7 @@ Pickwise.data.criteria = {
       "case_weight",
       "total_carry_weight"
      ],
-     "message": "전체 무게와 구성요소 무게를 동시에 가중하면 무게를 중복 반영해요."
+     "message": "전체 무게에는 이어폰·케이스 무게가 이미 들어 있어요. 함께 고르면 무게가 두 번 반영돼요."
     }
    ],
    "next": [
@@ -1147,7 +1147,7 @@ Pickwise.data.criteria = {
      "better": "low",
      "question": "보증금 비율은 어느 정도인가요?",
      "search": "{option} 보증금 비율",
-     "help": "지원한도 대비 기본 보증금 비율 (%) — initial_cost / support_cap * 100"
+     "help": "지원한도 대비 기본 보증금 비율 (%)"
     },
     {
      "id": "per_person_support_cap",
@@ -1167,7 +1167,7 @@ Pickwise.data.criteria = {
      "better": "low",
      "question": "동거인 수는 어느 정도인가요?",
      "search": "{option} 동거인 수",
-     "help": "함께 사는 사람 수 (명) — resident_count - 1"
+     "help": "함께 사는 사람 수 (명)"
     },
     {
      "id": "household_support_cap",
@@ -1199,7 +1199,7 @@ Pickwise.data.criteria = {
      "better": "high",
      "question": "연장기간은 어느 정도인가요?",
      "search": "{option} 연장기간",
-     "help": "최초 계약 이후 최대 연장기간 (개월) — maximum_tenure - usable_duration"
+     "help": "최초 계약 이후 최대 연장기간 (개월)"
     },
     {
      "id": "published_min_rate",
@@ -1239,7 +1239,7 @@ Pickwise.data.criteria = {
      "better": "low",
      "question": "총 임대료는 얼마인가요?",
      "search": "{option} 총 임대료",
-     "help": "위 월 임대료 시나리오에 최초 계약기간을 곱한 임대료 합계예요. 보증금·관리비·공과금은 제외해요."
+     "help": "위 월 임대료에 최초 계약기간을 곱한 임대료 합계예요. 보증금·관리비·공과금은 제외해요."
     },
     {
      "id": "household_base_deposit",
@@ -1249,7 +1249,7 @@ Pickwise.data.criteria = {
      "better": "low",
      "question": "전체 보증금은 얼마인가요?",
      "search": "{option} 전체 보증금",
-     "help": "전체 인원 기본 보증금 합계 (원) — initial_cost * resident_count"
+     "help": "전체 인원 기본 보증금 합계 (원)"
     },
     {
      "id": "per_person_net_principal",
@@ -1277,7 +1277,7 @@ Pickwise.data.criteria = {
       "maximum_renewals",
       "renewal_months"
      ],
-     "message": "관련 원자료와 파생값의 중복 가중에 유의해 주세요."
+     "message": "거주기간·재계약·연장기간은 계약기간으로 계산한 값이에요. 함께 고르면 기간이 여러 번 반영돼요."
     },
     {
      "ids": [
@@ -1292,7 +1292,7 @@ Pickwise.data.criteria = {
       "per_person_support_cap",
       "per_person_net_principal"
      ],
-     "message": "관련 원자료와 파생값의 중복 가중에 유의해 주세요."
+     "message": "개인 지원한도·개인 지원원금은 전체 지원한도를 나눠 계산한 값이에요. 함께 고르면 지원 금액이 여러 번 반영돼요."
     }
    ]
   },
@@ -1478,7 +1478,7 @@ Pickwise.data.criteria = {
      "better": "low",
      "question": "전체 무게는 어느 정도인가요?",
      "search": "{option} 전체 무게",
-     "help": "이어버드 2개와 케이스 총무게 (g) — earbud_weight * 2 + case_weight"
+     "help": "이어버드 2개와 케이스 총무게 (g)"
     },
     {
      "id": "anc_off_duration",
@@ -1518,7 +1518,7 @@ Pickwise.data.criteria = {
       "wireless_web_duration",
       "battery_capacity"
      ],
-     "message": "재생시간·웹 사용시간·배터리 용량은 관련성이 있지만 시험 조건과 의미가 달라요. 중복 가중에 유의해 주세요."
+     "message": "배터리·웹 사용시간·배터리 용량은 모두 배터리 성능과 관련 있어요. 함께 고르면 배터리가 여러 번 반영돼요."
     },
     {
      "ids": [
@@ -1526,7 +1526,7 @@ Pickwise.data.criteria = {
       "case_weight",
       "total_carry_weight"
      ],
-     "message": "전체 무게와 구성요소 무게를 동시에 가중하면 무게를 중복 반영해요."
+     "message": "전체 무게에는 이어폰·케이스 무게가 이미 들어 있어요. 함께 고르면 무게가 두 번 반영돼요."
     }
    ]
   },

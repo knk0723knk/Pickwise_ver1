@@ -94,7 +94,7 @@
       '<section class="s1-samples" data-s1="samples" hidden>' +
         '<div class="s1-samples-title">체험할 예시를 골라 주세요</div>' +
         samplesHtml() +
-        '<p class="rule-note">데이터팀이 공개 자료로 만든 비교 예시예요. 일부 값은 시연용 추정값이에요.</p>' +
+        '<p class="rule-note">공개 자료로 만든 비교 예시예요. 일부 값은 추정값이라 실제와 다를 수 있어요.</p>' +
       '</section>' +
       '<section class="block">' +
         '<div class="block-head"><span class="num">1</span><label for="s1-topic">결정 주제 입력</label></div>' +
@@ -140,7 +140,7 @@
       // 데이터팀 예시는 그 예시의 분류를 그대로 쓴다
       if (s.preset) {
         var pc = Pickwise.data.topics.categories.filter(function (x) { return x.id === s.category; })[0];
-        if (pc) { c = { id: pc.id, name: pc.name, matched: true }; note = '· 데이터팀 예시 시나리오'; }
+        if (pc) { c = { id: pc.id, name: pc.name, matched: true }; note = '· 예시 고민'; }
       }
       // "다음 결정 추천"으로 이어진 고민은 분류 단어가 없으면 이전 결정의 분류를 이어받는다
       if (!c.matched && s.categoryHint) {

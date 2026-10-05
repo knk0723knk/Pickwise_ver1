@@ -125,7 +125,7 @@
           sm.analysis.whatIf.map(function (w) {
             return '<li><span>' + esc(w.label) + '</span><b>1위 ' + esc(w.winner) + '</b><small>' +
               esc(w.scores.map(function (x) { return x.name + ' ' + x.score; }).join(' · ')) + '</small></li>';
-          }).join('') + '</ul><p class="rule-note">데이터팀이 미리 계산해 둔 결과예요.</p></section>';
+          }).join('') + '</ul><p class="rule-note">미리 계산해 둔 결과예요.</p></section>';
       }
       if (sm.notes.length) {
         extra += '<details class="s5-box s5-notes"><summary class="s5-box-title">' + icon('doc', 16) + '계산 전제와 한계</summary>' +

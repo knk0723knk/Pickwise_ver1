@@ -176,7 +176,7 @@
         var tag, f = facts[c.id];
         var stars1 = known ? scoreToStars(v) : 0;
         if (f && f.text && !f.edited && known) {
-          tag = '<span class="s4-src fact">자료 · ' + esc(f.text) + '</span>' + (f.estimated ? '<span class="s4-est" title="시연용 추정값이에요. 실제 값은 확인이 필요해요.">추정</span>' : '');
+          tag = '<span class="s4-src fact">자료 · ' + esc(f.text) + '</span>' + (f.estimated ? '<span class="s4-est" title="추정값이에요. 실제 값과 다를 수 있어요.">추정</span>' : '');
         } else if (m[c.id]) tag = known ? '<span class="s4-src manual">직접 고름</span>' : '<span class="s4-src unknown">모름</span>';
         else tag = known ? '<span class="s4-src auto">자동 · "' + esc(hits[opt][c.id]) + '"</span>' : '<span class="s4-src unknown">정보 없음</span>';
         var stars = '';

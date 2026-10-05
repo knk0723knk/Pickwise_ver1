@@ -114,13 +114,42 @@ function keywordsFor(id, c, better) {
   return { aliases: Array.from(new Set(aliases)), pos: fam.pos.slice(), neg: fam.neg.slice(), needsAlias: true };
 }
 
+/* ---------- 사용자 화면용 쉬운 말 (원본 JSON은 그대로 두고 변환할 때만 바꿈) ---------- */
+// 기준 중복 경고: 기준 조합별로 쉬운 문장으로 (원본 문구가 전문 용어인 것)
+const OVERLAP_PLAIN = [
+  { ids: ['usable_duration', 'maximum_tenure'], text: '거주기간·재계약·연장기간은 계약기간으로 계산한 값이에요. 함께 고르면 기간이 여러 번 반영돼요.' },
+  { ids: ['household_support_cap', 'per_person_support_cap'], text: '개인 지원한도·개인 지원원금은 전체 지원한도를 나눠 계산한 값이에요. 함께 고르면 지원 금액이 여러 번 반영돼요.' },
+  { ids: ['wireless_web_duration', 'battery_capacity'], text: '배터리·웹 사용시간·배터리 용량은 모두 배터리 성능과 관련 있어요. 함께 고르면 배터리가 여러 번 반영돼요.' },
+  { ids: ['case_weight', 'total_carry_weight'], text: '전체 무게에는 이어폰·케이스 무게가 이미 들어 있어요. 함께 고르면 무게가 두 번 반영돼요.' }
+];
+function plainOverlap(o) {
+  const hit = OVERLAP_PLAIN.find(p => p.ids.every(id => o.criterion_ids.includes(id)));
+  return hit ? hit.text : plain(o.message);
+}
+// 그 밖의 문장 속 전문 용어
+const PLAIN = [
+  ['비용 및 기간의 파생 기준을 함께 가중하면 같은 요소를 중복 반영할 수 있어요.', '비용·기간처럼 서로 계산으로 이어진 기준을 함께 고르면 같은 내용이 여러 번 반영될 수 있어요.'],
+  ['계산값은 비교를 위한 환산값이며 실제 금액이 아니에요.', '여기 나온 금액은 비교를 위해 계산한 값이라 실제 금액과 다를 수 있어요.'],
+  ['비용은 비교용 시나리오이고 실제 예약 금액이 아니에요.', '비용은 비교를 위한 예시 값이고 실제 예약 금액이 아니에요.'],
+  ['서울 기준 시연용 시나리오예요.', '서울 기준 예시 값이에요.'],
+  ['위 월 임대료 시나리오에', '위 월 임대료에'],
+  ['시연용 추정값', '추정값'],
+  ['시연용', '예시용'],
+  [/\s*—\s*[a-z_0-9\s*\/+\-().]+$/, '']   // 끝에 붙은 계산식(예: "— initial_cost / support_cap * 100")은 지운다
+];
+function plain(t) {
+  let s = t || '';
+  PLAIN.forEach(([a, b]) => { s = typeof a === 'string' ? s.split(a).join(b) : s.replace(a, b); });
+  return s;
+}
+
 /* ---------- 1) 체험 시나리오 ---------- */
 const samples = d.decisions.map(x => {
   const criteria = x.criteria.slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map(c => ({
     id: c.id, name: c.label, icon: iconOf(c.id), unit: c.unit || '',
     better: c.direction === 'lower_better' ? 'low' : 'high',
     group: c.scope === 'common' ? 'common' : (c.display_group === 'additional' ? 'more' : 'main'),
-    selected: !!c.selected, importance: c.importance || 0, help: c.help_text || ''
+    selected: !!c.selected, importance: c.importance || 0, help: plain(c.help_text)
   }));
   const values = {}, info = {};
   x.options.forEach(o => {
@@ -131,20 +160,20 @@ const samples = d.decisions.map(x => {
     });
   });
   const a = x.analysis || {}, ctx = x.context || {};
-  const notes = ['eligibility', 'assumptions', 'cost_calculation_assumptions', 'price_basis', 'battery_basis', 'limitations', 'criteria_limitations', 'reference_period'].filter(k => ctx[k]).map(k => ctx[k]);
+  const notes = ['eligibility', 'assumptions', 'cost_calculation_assumptions', 'price_basis', 'battery_basis', 'limitations', 'criteria_limitations', 'reference_period'].filter(k => ctx[k]).map(k => plain(ctx[k]));
   return {
     id: x.id, title: x.title, topic: x.title, category: catOf[x.id] || 'etc', options: x.options.map(o => o.label),
     criteria, values, info,
     analysis: {
       ranking: (a.ranking || []).map(r => ({ name: r.label, score: r.display_score })),
-      summary: a.summary || '', explanation: a.explanation || '', sensitivity: (a.sensitivity || []).map(s => s.text),
+      summary: plain(a.summary), explanation: plain(a.explanation), sensitivity: (a.sensitivity || []).map(s => s.text),
       whatIf: (a.what_if || []).map(w => ({ label: w.label, criterion: w.criterion_id, multiplier: w.multiplier,
         winner: (w.ranking && w.ranking[0] && w.ranking[0].label) || '', scores: (w.ranking || []).map(r => ({ name: r.label, score: r.display_score })) }))
     },
-    overlap: (x.criteria_overlap_warnings || []).map(o => ({ ids: o.criterion_ids, message: o.message })),
+    overlap: (x.criteria_overlap_warnings || []).map(o => ({ ids: o.criterion_ids, message: plainOverlap(o) })),
     next: (x.next_decision_suggestions || []).map(n => n.title),
     notes,
-    sources: (x.data_sources || []).map(s => ({ label: s.label, url: s.url || '', asOf: s.as_of || '', note: s.note || '' }))
+    sources: (x.data_sources || []).map(s => ({ label: s.label, url: s.url || '', asOf: s.as_of || '', note: plain(s.note) }))
   };
 });
 
@@ -160,7 +189,7 @@ d.categories.forEach(cat => {
   const commonIds = COMMON_BY_CAT[app];
   cat.decision_ids.forEach(did => {
     const x = d.decisions.find(z => z.id === did);
-    (x.criteria_overlap_warnings || []).forEach(o => overlap.push({ ids: o.criterion_ids, message: o.message }));
+    (x.criteria_overlap_warnings || []).forEach(o => overlap.push({ ids: o.criterion_ids, message: plainOverlap(o) }));
     (x.next_decision_suggestions || []).forEach(n => { (nextByCat[app] = nextByCat[app] || []).includes(n.title) || nextByCat[app].push(n.title); });
     x.criteria.slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).forEach(c => {
       if (c.scope === 'common' || commonIds.includes(c.id)) return;
@@ -173,7 +202,7 @@ d.categories.forEach(cat => {
       seenId.add(c.id); seenName.add(name);
       const better = c.direction === 'lower_better' ? 'low' : 'high';
       const item = { id: c.id, name, icon: iconOf(c.id), default: !!c.selected, better,
-        question: questionFor(c), search: '{option} ' + name.replace(/\(.*?\)/g, '').trim(), help: c.help_text || '' };
+        question: questionFor(c), search: '{option} ' + name.replace(/\(.*?\)/g, '').trim(), help: plain(c.help_text) };
       (c.display_group === 'additional' ? more : main).push(item);
       keywords[c.id] = keywordsFor(c.id, c, better);
     });
@@ -229,7 +258,7 @@ d.decisions.forEach(x => {
   scenarios[x.id] = {
     title: x.title, category: app, hints: SCENARIO_HINTS[x.id] || x.title.split(/\s+/),
     common, main, more,
-    overlap: (x.criteria_overlap_warnings || []).map(o => ({ ids: o.criterion_ids, message: o.message })),
+    overlap: (x.criteria_overlap_warnings || []).map(o => ({ ids: o.criterion_ids, message: plainOverlap(o) })),
     next: (x.next_decision_suggestions || []).map(n => n.title)
   };
 });

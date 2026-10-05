@@ -45,8 +45,9 @@
 
 /* 겹치는 기준 안내 */
 .s2-warn {
-  border: 1px solid var(--danger); border-radius: 12px; padding: 10px 12px; margin-top: -8px;
-  display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--danger);
+  border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 10px 12px; margin-top: -8px;
+  display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted);
 }
+.s2-warn svg { color: var(--accent-strong); }
 .s2-warn p { margin: 0; display: flex; gap: 6px; align-items: flex-start; }
 .s2-warn svg { flex: none; margin-top: 2px; }

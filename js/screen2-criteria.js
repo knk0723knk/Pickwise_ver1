@@ -86,7 +86,7 @@
       '<div class="s2-head">' +
         '<h2>어떤 기준으로 비교할까요?</h2>' +
         '<p><span class="chip">' + esc(catName(state)) + '</span> ' +
-          (data.scenario ? '데이터셋의 <strong>' + esc(data.scenario) + '</strong> 기준을 골라 두었어요.' : '고민에 자주 쓰는 기준을 골라 두었어요.') +
+          '고민에 자주 쓰는 기준을 골라 두었어요.' +
           ' 더 고르거나 직접 추가해 보세요.</p>' +
       '</div>' +
       '<div class="s2-count" data-s2="count" aria-live="polite"></div>' +
@@ -151,11 +151,14 @@
       q('count').classList.toggle('warn', n < MIN || n > MAX);
 
       // 같은 내용이 겹치는 기준을 함께 고르면 안내 (데이터팀 예시의 중복 경고)
+      var defaults = data.main.filter(function (c) { return c.default; }).map(function (c) { return c.id; });
       var warns = (data.overlap || []).filter(function (o) {
-        return o.ids.filter(function (id) { return ids.indexOf(id) > -1; }).length >= 2;
+        var picked = o.ids.filter(function (id) { return ids.indexOf(id) > -1; });
+        var added = picked.some(function (id) { return defaults.indexOf(id) < 0; });   // 추천 외에 직접 고른 기준이 있을 때만
+        return picked.length >= 2 && added;
       });
       q('warn').hidden = !warns.length;
-      q('warn').innerHTML = warns.map(function (o) { return '<p>' + icon('alert', 14) + esc(o.message) + '</p>'; }).join('');
+      q('warn').innerHTML = warns.map(function (o) { return '<p>' + icon('bulb', 14) + esc(o.message) + '</p>'; }).join('');
     }
 
     function toggle(id) {
