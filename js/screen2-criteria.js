@@ -1,18 +1,19 @@
 /* ============================================================
    화면 2 · 기준 선택 (담당: 조원3)
-   - 분류(state.category)에 맞는 추천 기준 카드 (data/criteria.js)
+   - 공통 기준(비용·시간 등) + 분류(state.category)별 고유 기준 카드 (data/criteria.js)
    - "이런 기준도 고려해보세요" → 눌러서 추가
    - 기준 직접 추가
    - 결과: state.criteria = [{ id, name, icon, custom }]
    ============================================================ */
 (function () {
   var MIN = 2, MAX = 8;
-  var initFor = null;   // 어떤 분류 기준으로 추천을 채웠는지 (주제가 바뀌면 다시 채움)
   var customSeq = 0;
 
+  /* { common, main, more } — main 은 화면 카드 순서대로: 공통 기준 다음 분류별 기준 */
   function catData(state) {
     var all = Pickwise.data.criteria;
-    return all[state.category] || all.etc;
+    var cat = all.categories[state.category] || all.categories.etc;
+    return { common: all.common, own: cat.main, main: all.common.concat(cat.main), more: cat.more };
   }
   function catName(state) {
     var c = Pickwise.data.topics.categories.filter(function (x) { return x.id === state.category; })[0];
@@ -20,17 +21,19 @@
   }
   function pick(c) { return { id: c.id, name: c.name, icon: c.icon, custom: !!c.custom }; }
 
-  /* 처음 들어왔거나 주제(분류)가 바뀌었으면 추천 기본값으로 채운다 */
+  /* 처음 들어왔거나 주제(분류)가 바뀌었으면 추천 기본값으로 채운다
+     state.criteriaFor = 지금 기준 목록을 어떤 분류로 골랐는지 (새 결정·예시를 불러오면 함께 바뀜) */
   function ensureSelection(state) {
+    var defaults = function () { return catData(state).main.filter(function (c) { return c.default; }).map(pick); };
     if (!state.criteria.length) {
-      state.criteria = catData(state).main.filter(function (c) { return c.default; }).map(pick);
-      initFor = state.category;
+      state.criteria = defaults();
+      state.criteriaFor = state.category;
       return false;
     }
-    if (initFor === null) { initFor = state.category; return false; }   // 예시 데이터 등 이미 채워진 경우
-    if (initFor !== state.category) {
-      state.criteria = catData(state).main.filter(function (c) { return c.default; }).map(pick);
-      initFor = state.category;
+    if (!state.criteriaFor) { state.criteriaFor = state.category; return false; }
+    if (state.criteriaFor !== state.category) {
+      state.criteria = defaults();
+      state.criteriaFor = state.category;
       return true;
     }
     return false;
@@ -47,7 +50,16 @@
         '<p><span class="chip">' + esc(catName(state)) + '</span> 고민에 자주 쓰는 기준을 골라 두었어요. 더 고르거나 직접 추가해 보세요.</p>' +
       '</div>' +
       '<div class="s2-count" data-s2="count" aria-live="polite"></div>' +
-      '<div class="s2-grid" data-s2="grid" role="group" aria-label="비교 기준"></div>' +
+      '<div class="s2-cards" data-s2="cards">' +
+      '<div class="s2-group">' +
+        '<div class="s2-group-title">모든 고민에 쓰는 기준</div>' +
+        '<div class="s2-grid" data-s2="grid-common" role="group" aria-label="공통 기준"></div>' +
+      '</div>' +
+      '<div class="s2-group">' +
+        '<div class="s2-group-title">' + esc(catName(state)) + ' 고민에 특히 중요한 기준</div>' +
+        '<div class="s2-grid" data-s2="grid" role="group" aria-label="' + esc(catName(state)) + ' 기준"></div>' +
+      '</div>' +
+      '</div>' +
       '<section class="s2-more">' +
         '<div class="s2-more-title">' + icon('bulb', 18) + '이런 기준도 고려해보세요</div>' +
         '<p class="hint">' + esc(catName(state)) + ' 고민에서 놓치기 쉬운 기준이에요.</p>' +
@@ -68,20 +80,23 @@
 
     function selectedIds() { return Pickwise.state.criteria.map(function (c) { return c.id; }); }
 
+    function card(c, ids) {
+      var on = ids.indexOf(c.id) > -1;
+      return '<button type="button" class="s2-card' + (on ? ' on' : '') + '" data-id="' + esc(c.id) + '" aria-pressed="' + on + '">' +
+        '<span class="s2-icon">' + icon(c.icon, 20) + '</span>' +
+        '<span class="s2-name">' + esc(c.name) + (c.custom ? ' <small>직접</small>' : '') + '</span>' +
+        '<span class="s2-check">' + icon('check', 13) + '</span>' +
+      '</button>';
+    }
+
     function draw() {
       var s = Pickwise.state;
       var ids = selectedIds();
-      // 카드 = 추천 기준 8개 + (추가로 고른 기준·직접 추가한 기준)
+      // 공통 기준 카드 / 분류별 기준 카드 + (추가로 고른 기준·직접 추가한 기준)
       var mainIds = data.main.map(function (c) { return c.id; });
-      var cards = data.main.concat(s.criteria.filter(function (c) { return mainIds.indexOf(c.id) < 0; }));
-      q('grid').innerHTML = cards.map(function (c) {
-        var on = ids.indexOf(c.id) > -1;
-        return '<button type="button" class="s2-card' + (on ? ' on' : '') + '" data-id="' + esc(c.id) + '" aria-pressed="' + on + '">' +
-          '<span class="s2-icon">' + icon(c.icon, 20) + '</span>' +
-          '<span class="s2-name">' + esc(c.name) + (c.custom ? ' <small>직접</small>' : '') + '</span>' +
-          '<span class="s2-check">' + icon('check', 13) + '</span>' +
-        '</button>';
-      }).join('');
+      var own = data.own.concat(s.criteria.filter(function (c) { return mainIds.indexOf(c.id) < 0; }));
+      q('grid-common').innerHTML = data.common.map(function (c) { return card(c, ids); }).join('');
+      q('grid').innerHTML = own.map(function (c) { return card(c, ids); }).join('');
 
       var more = data.more.filter(function (c) { return ids.indexOf(c.id) < 0; });
       q('more').innerHTML = more.length
@@ -109,7 +124,7 @@
       draw();
     }
 
-    q('grid').addEventListener('click', function (e) {
+    q('cards').addEventListener('click', function (e) {
       var b = e.target.closest('[data-id]');
       if (!b) return;
       var id = b.getAttribute('data-id');

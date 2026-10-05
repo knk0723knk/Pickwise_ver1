@@ -53,9 +53,12 @@
 
   /* 기준 정보(질문·검색어) 찾기 */
   function meta(c) {
-    var all = Pickwise.data.criteria, found = null;
-    Object.keys(all).some(function (cat) {
-      found = all[cat].main.concat(all[cat].more).filter(function (x) { return x.id === c.id; })[0];
+    var all = Pickwise.data.criteria, cats = all.categories;
+    var found = all.common.filter(function (x) { return x.id === c.id; })[0] || null;
+    var order = [Pickwise.state.category].concat(Object.keys(cats));   // 지금 분류의 질문을 먼저
+    order.some(function (cat) {
+      if (found || !cats[cat]) return !!found;
+      found = cats[cat].main.concat(cats[cat].more).filter(function (x) { return x.id === c.id; })[0];
       return !!found;
     });
     return found || { question: c.name + '에 대해 알고 있는 점이 있나요?', search: '{option} ' + c.name };

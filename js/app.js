@@ -28,6 +28,7 @@ window.Pickwise = (function () {
       category: '',
       options: ['', ''],   // 2~4개
       criteria: [],        // [{ id, name, icon, custom }]
+      criteriaFor: '',     // 위 기준 목록을 어떤 분류로 골랐는지 (주제 분류가 바뀌면 화면 2가 새로 추천)
       weights: {},         // { 기준id: 중요도% } 합계 100
       info: {},            // { 선택지이름: 설명 }
       ratings: {},         // { 선택지이름: { 기준id: 1~5 또는 null(모름) } }
