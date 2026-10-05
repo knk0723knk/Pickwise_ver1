@@ -7,7 +7,10 @@
        t.summary      // "A가 B보다 나은 핵심 이유" 한 줄
        t.explain      // AI 설명 문장 배열 (2~3개)
        t.biggest      // 차이가 큰 기준 [{ id, name, lead: 선택지이름, diff }]
-       t.confidence   // { level: 'high'|'mid'|'low', label, text, focus: 기준 }
+       t.confidence   // { level: 'high'|'mid'|'low', label, text, focus: 기준, estimated }
+       t.preset       // 데이터팀 예시를 그대로 진행했으면 { sample } (데이터팀 작성 문장을 썼다는 뜻), 아니면 null
+   - 데이터팀 예시(data/samples.js)를 기준·중요도·점수 그대로 진행하면 데이터팀이 미리 쓴 문장을 보여주고,
+     하나라도 바꾸면 규칙 기반 문장으로 바뀐다 (실시간 AI 호출 없음)
    ============================================================ */
 (function () {
   /* 문장 틀 채우기: {winner} → 값, {winner:은는} → 값 + 받침에 맞는 조사 */
@@ -25,6 +28,14 @@
     var h = 0;
     for (var i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
     return list[h % list.length];
+  }
+
+  /* 데이터팀 예시를 그대로 진행 중인지 */
+  function presetOf(state) {
+    if (!state.preset) return null;
+    var sm = (Pickwise.data.samples || []).filter(function (x) { return x.id === state.preset.id; })[0];
+    if (!sm) return null;
+    return { sample: sm, unchanged: Pickwise.scoring.signature(state) === state.preset.sig };
   }
 
   function build(state, result) {
@@ -75,14 +86,23 @@
       .slice(0, 3)
       .map(function (d) { return { id: d.id, name: d.name, lead: d.diff > 0 ? win.name : lose.name, diff: Math.abs(d.ratingDiff) }; });
 
-    return {
+    var out = {
       summary: fill(summary, vars),
       explain: explain.map(function (s) { return fill(s, vars); }),
       biggest: biggest,
       confidence: confidence(state, result, win, lose, seed),
       ruleNote: T.ruleNote,
+      preset: null,
       fill: fill
     };
+    var p = presetOf(state);
+    if (p && p.unchanged) {
+      out.summary = p.sample.analysis.summary || out.summary;
+      if (p.sample.analysis.explanation) out.explain = [p.sample.analysis.explanation];
+      out.ruleNote = T.presetNote || out.ruleNote;
+      out.preset = { sample: p.sample };
+    }
+    return out;
   }
 
   /* 확신도: 1·2위 중 "모름(정보 없음)" 기준의 비중 합으로 판단 */
@@ -96,8 +116,18 @@
     var level = share < 15 ? 'high' : share < 40 ? 'mid' : 'low';
     var label = { high: '높음', mid: '보통', low: '낮음' }[level];
     var text = fill(pick(T[level], seed), { crit: focus ? focus.name : '' });
-    return { level: level, label: label, text: text, focus: focus, unknownShare: share };
+    // 시연용 추정값이 섞여 있으면 함께 알린다
+    var facts = state.facts || {};
+    var estimated = state.criteria.filter(function (c) {
+      return [win.name, lose.name].some(function (o) { var f = facts[o] && facts[o][c.id]; return f && f.estimated && !f.edited; });
+    });
+    if (estimated.length && T.estimated) {
+      var estText = fill(T.estimated[0], { crit: estimated.map(function (c) { return c.name; }).join('·') });
+      if (level === 'high') { level = 'mid'; label = '보통'; text = (T.filled ? T.filled[0] + ' ' : '') + estText; }
+      else text += ' ' + estText;
+    }
+    return { level: level, label: label, text: text, focus: focus, unknownShare: share, estimated: estimated };
   }
 
-  Pickwise.explain = { build: build, fill: fill };
+  Pickwise.explain = { build: build, fill: fill, presetOf: presetOf };
 })();

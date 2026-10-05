@@ -53,11 +53,14 @@
       var bars = r.options.map(function (o) {
         var p = o.per[c.id];
         var unknown = p.rating === null;
-        var label = unknown ? '모름(3점으로 계산)' : p.rating + '점';
+        var f = state.facts && state.facts[o.name] && state.facts[o.name][c.id];
+        var fact = f && f.text && !f.edited ? f : null;
+        var label = unknown ? '모름(50점으로 계산)' : (fact ? fact.text + ' · ' : '') + Math.round(p.rating) + '점';
         return '<div class="s5-bar-row" title="' + esc(o.name + ' · ' + c.name + ' ' + label) + '">' +
           '<span class="s5-bar-name">' + esc(o.name) + '</span>' +
-          '<span class="s5-track"><span class="s5-bar' + (unknown ? ' unknown' : '') + '" style="width:' + (p.used * 20) + '%;--c:' + color(o.name) + '"></span></span>' +
-          '<span class="s5-bar-val">' + (unknown ? '모름' : p.rating + '점') + '</span>' +
+          '<span class="s5-track"><span class="s5-bar' + (unknown ? ' unknown' : '') + '" style="width:' + p.used + '%;--c:' + color(o.name) + '"></span></span>' +
+          '<span class="s5-bar-val">' + (unknown ? '모름' : Math.round(p.rating) + '점') + '</span>' +
+          (fact ? '<span class="s5-fact">' + esc(fact.text) + (fact.estimated ? ' <em>추정</em>' : '') + '</span>' : '') +
         '</div>';
       }).join('');
       return '<div class="s5-crit">' +
@@ -68,7 +71,7 @@
     /* ---------- 가장 큰 차이 ---------- */
     var biggest = t.biggest.length
       ? t.biggest.map(function (b) {
-          return '<span class="s5-diff">' + esc(b.name) + ' <small>' + esc(b.lead) + ' +' + b.diff + '</small></span>';
+          return '<span class="s5-diff">' + esc(b.name) + ' <small>' + esc(b.lead) + ' +' + Math.round(b.diff) + '점</small></span>';
         }).join('')
       : '<span class="hint">두 선택지가 모든 기준에서 같은 점수예요.</span>';
 
@@ -95,7 +98,7 @@
 
       '<section class="s5-box"><div class="s5-box-title">' + icon('chart', 16) + '항목별 비교</div>' +
         '<div class="s5-legend">' + legend + '</div>' + rows +
-        '<p class="hint">막대는 기준별 별점(5점 만점)이에요. 비중이 클수록 종합 점수에 크게 반영돼요.</p></section>' +
+        '<p class="hint">막대는 기준별 점수(100점 만점)예요. 비중이 클수록 종합 점수에 크게 반영돼요.</p></section>' +
 
       '<section class="s5-box"><div class="s5-box-title">' + icon('target', 16) + '가장 큰 차이</div><div class="s5-diffs">' + biggest + '</div></section>' +
 
@@ -112,6 +115,31 @@
         '<div class="s5-sens-panel" data-s5="sens-panel" hidden></div></section>' +
 
       filesHtml;
+
+    /* ---------- 데이터팀 예시: 이렇게 본다면? · 계산 전제 · 출처 ---------- */
+    var pr = Pickwise.explain.presetOf(state);
+    if (pr) {
+      var sm = pr.sample, extra = '';
+      if (pr.unchanged && sm.analysis.whatIf.length) {
+        extra += '<section class="s5-box"><div class="s5-box-title">' + icon('refresh', 16) + '이렇게 본다면?</div><ul class="s5-whatif">' +
+          sm.analysis.whatIf.map(function (w) {
+            return '<li><span>' + esc(w.label) + '</span><b>1위 ' + esc(w.winner) + '</b><small>' +
+              esc(w.scores.map(function (x) { return x.name + ' ' + x.score; }).join(' · ')) + '</small></li>';
+          }).join('') + '</ul><p class="rule-note">데이터팀이 미리 계산해 둔 결과예요.</p></section>';
+      }
+      if (sm.notes.length) {
+        extra += '<details class="s5-box s5-notes"><summary class="s5-box-title">' + icon('doc', 16) + '계산 전제와 한계</summary>' +
+          sm.notes.map(function (n) { return '<p>' + esc(n) + '</p>'; }).join('') + '</details>';
+      }
+      if (sm.sources.length) {
+        extra += '<section class="s5-box"><div class="s5-box-title">' + icon('link', 16) + '자료 출처</div><ul class="s5-sources">' +
+          sm.sources.map(function (src) {
+            var name = src.url ? '<a href="' + esc(src.url) + '" target="_blank" rel="noopener noreferrer">' + esc(src.label) + '</a>' : esc(src.label);
+            return '<li>' + name + (src.asOf ? ' <small>(' + esc(src.asOf) + ')</small>' : '') + (src.note ? '<br><small>' + esc(src.note) + '</small>' : '') + '</li>';
+          }).join('') + '</ul></section>';
+      }
+      el.insertAdjacentHTML('beforeend', extra);
+    }
 
     var q = function (n) { return el.querySelector('[data-s5="' + n + '"]'); };
 
@@ -142,8 +170,8 @@
       p.innerHTML = '<p class="hint">슬라이더를 움직여 보세요. 입력한 원래 중요도는 바뀌지 않아요.</p>' +
         state.criteria.map(function (c) {
           return '<div class="s5-sl"><label for="s5-w-' + esc(c.id) + '">' + esc(c.name) + '</label>' +
-            '<input type="range" min="0" max="10" step="1" id="s5-w-' + esc(c.id) + '" data-tw="' + esc(c.id) + '" value="' + trial[c.id] + '">' +
-            '<output data-tv="' + esc(c.id) + '">' + trial[c.id] + '점</output></div>';
+            '<input type="range" min="0" max="100" step="5" id="s5-w-' + esc(c.id) + '" data-tw="' + esc(c.id) + '" value="' + trial[c.id] + '">' +
+            '<output data-tv="' + esc(c.id) + '">' + trial[c.id] + '</output></div>';
         }).join('') +
         '<div data-s5="sens-result"></div>' +
         '<button type="button" class="pill-btn" data-s5="sens-reset">' + icon('refresh', 14) + '원래대로</button>';
@@ -151,15 +179,15 @@
         var id = e.target.getAttribute('data-tw');
         if (!id) return;
         trial[id] = +e.target.value;
-        if (!Object.keys(trial).some(function (k) { return trial[k] > 0; })) { trial[id] = 1; e.target.value = 1; }
-        p.querySelector('[data-tv="' + id + '"]').textContent = trial[id] + '점';
+        if (!Object.keys(trial).some(function (k) { return trial[k] > 0; })) { trial[id] = 5; e.target.value = 5; }
+        p.querySelector('[data-tv="' + id + '"]').textContent = trial[id];
         drawSens();
       });
       q('sens-reset').addEventListener('click', function () {
         resetTrial();
         state.criteria.forEach(function (c) {
           p.querySelector('[data-tw="' + c.id + '"]').value = trial[c.id];
-          p.querySelector('[data-tv="' + c.id + '"]').textContent = trial[c.id] + '점';
+          p.querySelector('[data-tv="' + c.id + '"]').textContent = trial[c.id];
         });
         drawSens();
       });

@@ -75,6 +75,7 @@ Pickwise.data.criteria = {
         { "id": "learning",    "name": "배울 점",         "icon": "book",   "default": false, "question": "새로 배우거나 얻는 것이 있나요?", "search": "{option} 커리큘럼" }
       ],
       "more": [
+        { "id": "health",     "name": "건강",              "icon": "heart",    "question": "몸과 마음 건강에 도움이 되나요? (운동이라면 소모 열량·부상 위험)", "search": "{option} 효과" },
         { "id": "schedule",   "name": "일정 유연성",       "icon": "calendar", "question": "야근이 있어도 일정을 맞출 수 있나요?", "search": "{option} 시간표" },
         { "id": "people",     "name": "함께하는 사람",     "icon": "users",    "question": "같이 공부할 사람이나 스터디가 있나요?", "search": "{option} 스터디" },
         { "id": "reversible", "name": "중간에 그만둘 수 있는지", "icon": "refresh", "question": "맞지 않으면 환불하거나 그만둘 수 있나요?", "search": "{option} 환불 규정" }

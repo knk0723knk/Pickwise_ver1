@@ -1,6 +1,6 @@
 /* ============================================================
    민감도 분석 (담당: 조원7)
-   - 기준 하나의 중요도(0~10점)만 바꾸고 나머지는 그대로 둔 채 다시 계산해서,
+   - 기준 하나의 중요도(0~100, 5 단위)만 바꾸고 나머지는 그대로 둔 채 다시 계산해서,
      1위가 바뀌는 지점을 찾는다.
    - 사용:
        var s = Pickwise.sensitivity.analyze(state);
@@ -8,7 +8,7 @@
        s.text    // 대표 문장 1개 ("날씨 중요도를 3점 이하로 내리면 이집트가 1위가 돼요.")
    ============================================================ */
 (function () {
-  var MAX = 10;
+  var MAX = 100, STEP = 5;
 
   function winnerOf(state, weights) {
     var r = Pickwise.scoring.compute(state, weights);
@@ -26,7 +26,7 @@
       var from = state.weights[c.id];
       var found = null;
       // 지금 점수에서 가까운 쪽부터 위·아래로 한 칸씩 바꿔 본다
-      for (var step = 1; step <= MAX && !found; step++) {
+      for (var step = STEP; step <= MAX && !found; step += STEP) {
         [from + step, from - step].forEach(function (v) {
           if (found || v < 0 || v > MAX) return;
           var w = {};

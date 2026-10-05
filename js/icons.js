@@ -68,8 +68,12 @@
     var noB = pair === '으로로' ? '로' : pair.charAt(1);
     var last = w.replace(/[\s)\]"'.,!?]+$/, '').slice(-1);
     var code = last.charCodeAt(0) - 0xAC00;
-    if (!(code >= 0 && code <= 11171)) return w + withB + '(' + noB + ')';   // 한글이 아니면 "을(를)"처럼
-    var b = code % 28;
+    var b;
+    if (code >= 0 && code <= 11171) b = code % 28;
+    else if (/[0-9]/.test(last)) b = [16, 8, 0, 16, 0, 0, 1, 8, 8, 0][+last];   // 영 일 이 삼 사 오 육 칠 팔 구 (받침, ㄹ=8)
+    else if (/[lLmMnNrR]/.test(last)) b = /[lLrR]/.test(last) ? 8 : 4;         // 영어 끝소리 l·m·n·r 은 받침 있음
+    else if (/[a-zA-Z]/.test(last)) b = 0;
+    else return w + withB + '(' + noB + ')';   // 판단하기 어려우면 "을(를)"처럼
     if (pair === '으로로') return w + (b === 0 || b === 8 ? noB : withB);  // ㄹ 받침은 "로"
     return w + (b === 0 ? noB : withB);
   };

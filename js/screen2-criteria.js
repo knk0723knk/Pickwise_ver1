@@ -10,10 +10,22 @@
   var customSeq = 0;
 
   /* { common, main, more } — main 은 화면 카드 순서대로: 공통 기준 다음 분류별 기준 */
+  function sampleOf(state) {
+    if (!state.preset) return null;
+    return (Pickwise.data.samples || []).filter(function (x) { return x.id === state.preset.id; })[0] || null;
+  }
   function catData(state) {
+    var sm = sampleOf(state);
+    if (sm) {
+      // 데이터팀 예시: 그 시나리오의 기준(공통 / 고유 / 추가 제안)을 그대로 쓴다
+      var by = function (g) { return sm.criteria.filter(function (c) { return c.group === g; })
+        .map(function (c) { return { id: c.id, name: c.name, icon: c.icon, default: c.selected, help: c.help }; }); };
+      var common = by("common"), own = by("main");
+      return { common: common, own: own, main: common.concat(own), more: by("more"), overlap: sm.overlap || [] };
+    }
     var all = Pickwise.data.criteria;
     var cat = all.categories[state.category] || all.categories.etc;
-    return { common: all.common, own: cat.main, main: all.common.concat(cat.main), more: cat.more };
+    return { common: all.common, own: cat.main, main: all.common.concat(cat.main), more: cat.more, overlap: [] };
   }
   function catName(state) {
     var c = Pickwise.data.topics.categories.filter(function (x) { return x.id === state.category; })[0];
@@ -60,6 +72,7 @@
         '<div class="s2-grid" data-s2="grid" role="group" aria-label="' + esc(catName(state)) + ' 기준"></div>' +
       '</div>' +
       '</div>' +
+      '<div class="s2-warn" data-s2="warn" role="status" hidden></div>' +
       '<section class="s2-more">' +
         '<div class="s2-more-title">' + icon('bulb', 18) + '이런 기준도 고려해보세요</div>' +
         '<p class="hint">' + esc(catName(state)) + ' 고민에서 놓치기 쉬운 기준이에요.</p>' +
@@ -82,7 +95,7 @@
 
     function card(c, ids) {
       var on = ids.indexOf(c.id) > -1;
-      return '<button type="button" class="s2-card' + (on ? ' on' : '') + '" data-id="' + esc(c.id) + '" aria-pressed="' + on + '">' +
+      return '<button type="button" class="s2-card' + (on ? ' on' : '') + '" data-id="' + esc(c.id) + '" aria-pressed="' + on + '"' + (c.help ? ' title="' + esc(c.help) + '"' : '') + '>' +
         '<span class="s2-icon">' + icon(c.icon, 20) + '</span>' +
         '<span class="s2-name">' + esc(c.name) + (c.custom ? ' <small>직접</small>' : '') + '</span>' +
         '<span class="s2-check">' + icon('check', 13) + '</span>' +
@@ -108,6 +121,13 @@
       var n = ids.length;
       q('count').innerHTML = '<strong>' + n + '개</strong> 선택 · ' + MIN + '~' + MAX + '개까지 고를 수 있어요';
       q('count').classList.toggle('warn', n < MIN || n > MAX);
+
+      // 같은 내용이 겹치는 기준을 함께 고르면 안내 (데이터팀 예시의 중복 경고)
+      var warns = (data.overlap || []).filter(function (o) {
+        return o.ids.filter(function (id) { return ids.indexOf(id) > -1; }).length >= 2;
+      });
+      q('warn').hidden = !warns.length;
+      q('warn').innerHTML = warns.map(function (o) { return '<p>' + icon('alert', 14) + esc(o.message) + '</p>'; }).join('');
     }
 
     function toggle(id) {

@@ -1,5 +1,6 @@
 # ── 회사 내부 자료·실명 포함 문서 (GitHub에 올리지 않음) ──
 docs/기획안.pdf
+docs/원본데이터/
 *.pdf
 *.pptx
 *.ppt

@@ -35,13 +35,67 @@
     return { id: best.id, name: best.name, matched: bestCount > 0 };
   }
 
+  /* ---------- 예시 시나리오 (data/samples.js + data/example.js) ---------- */
+  function samplesHtml() {
+    var esc = Pickwise.esc;
+    var cats = Pickwise.data.topics.categories;
+    var list = Pickwise.data.samples || [];
+    var groups = cats.map(function (c) {
+      var items = list.filter(function (s) { return s.category === c.id; });
+      if (!items.length) return '';
+      return '<div class="s1-sample-group"><span class="s1-sample-cat">' + esc(c.name) + '</span>' +
+        items.map(function (s) {
+          return '<button type="button" class="s1-sample" data-sample="' + esc(s.id) + '">' + esc(s.title) +
+            '<small>' + esc(s.options.join(' · ')) + '</small></button>';
+        }).join('') + '</div>';
+    }).join('');
+    return groups +
+      '<div class="s1-sample-group"><span class="s1-sample-cat">설명글</span>' +
+        '<button type="button" class="s1-sample" data-sample="text-example">설명글로 비교해 보기' +
+        '<small>그리스 · 이집트 — 글을 쓰면 점수를 자동으로 골라 줘요</small></button></div>';
+  }
+
+  /* 데이터팀 시나리오 불러오기: 기준·중요도·기준 점수(0~100)·수치·추정 여부·설명글까지 채운다 */
+  function loadSample(id) {
+    var s = (Pickwise.data.samples || []).filter(function (x) { return x.id === id; })[0];
+    if (!s) return false;
+    var selected = s.criteria.filter(function (c) { return c.selected; });
+    var state = {
+      topic: s.topic, category: s.category, criteriaFor: s.category,
+      options: s.options.slice(),
+      criteria: selected.map(function (c) { return { id: c.id, name: c.name, icon: c.icon, custom: false }; }),
+      weights: {}, info: {}, ratings: {}, manual: {}, facts: {},
+      attachments: [], decisionId: '', parentTopic: '', categoryHint: ''
+    };
+    selected.forEach(function (c) { state.weights[c.id] = c.importance; });
+    s.options.forEach(function (o) {
+      state.info[o] = s.info[o] || '';
+      state.ratings[o] = {}; state.manual[o] = {}; state.facts[o] = {};
+      s.criteria.forEach(function (c) {
+        var v = s.values[o][c.id];
+        state.ratings[o][c.id] = v.score;
+        state.manual[o][c.id] = true;       // 자료 점수라서 설명글 자동 제안이 덮어쓰지 않게
+        state.facts[o][c.id] = { text: v.text, estimated: v.estimated };
+      });
+    });
+    Object.keys(state).forEach(function (k) { Pickwise.state[k] = state[k]; });
+    Pickwise.state.preset = { id: s.id, sig: Pickwise.scoring.signature(Pickwise.state) };
+    return true;
+  }
+  Pickwise.loadSample = loadSample;
+
   function render(el, state) {
     el.innerHTML =
       '<div class="s1-intro">' + ICON_BULB +
         '<h2>어떤 결정이 고민되세요?</h2>' +
         '<p>비교하고 싶은 주제와 선택지를 입력하면<br>내 기준에 맞는 선택을 함께 정리해 드려요.</p>' +
-        '<button class="s1-demo" type="button" data-s1="demo">' + ICON_PLAY + '예시로 체험하기 <span class="s1-demo-sub">그리스 vs 이집트</span></button>' +
+        '<button class="s1-demo" type="button" data-s1="demo-toggle" aria-expanded="false">' + ICON_PLAY + '예시로 체험하기</button>' +
       '</div>' +
+      '<section class="s1-samples" data-s1="samples" hidden>' +
+        '<div class="s1-samples-title">체험할 예시를 골라 주세요</div>' +
+        samplesHtml() +
+        '<p class="rule-note">데이터팀이 공개 자료로 만든 비교 예시예요. 일부 값은 시연용 추정값이에요.</p>' +
+      '</section>' +
       '<section class="block">' +
         '<div class="block-head"><span class="num">1</span><label for="s1-topic">결정 주제 입력</label></div>' +
         '<div class="field" data-s1="topic-field">' + ICON_DOC +
@@ -54,7 +108,8 @@
           '<button class="pill-btn" type="button" data-s1="add">' + ICON_PLUS + '선택지 추가</button></div>' +
         '<div class="s1-options" data-s1="options" role="group" aria-labelledby="s1-opt-label"></div>' +
         '<p class="hint" data-s1="opt-hint"></p>' +
-      '</section>';
+      '</section>' +
+      '<p class="hint s1-privacy">실제 개인정보나 사내 정보는 입력하지 마세요.</p>';
 
     var q = function (name) { return el.querySelector('[data-s1="' + name + '"]'); };
     var topicInput = el.querySelector('#s1-topic');
@@ -82,6 +137,11 @@
       }
       var c = classify(s.topic);
       var note = c.matched ? '· 입력한 단어로 자동 분류했어요 (규칙 기반)' : '· 일반 기준을 추천해 드릴게요';
+      // 데이터팀 예시는 그 예시의 분류를 그대로 쓴다
+      if (s.preset) {
+        var pc = Pickwise.data.topics.categories.filter(function (x) { return x.id === s.category; })[0];
+        if (pc) { c = { id: pc.id, name: pc.name, matched: true }; note = '· 데이터팀 예시 시나리오'; }
+      }
       // "다음 결정 추천"으로 이어진 고민은 분류 단어가 없으면 이전 결정의 분류를 이어받는다
       if (!c.matched && s.categoryHint) {
         var hint = Pickwise.data.topics.categories.filter(function (x) { return x.id === s.categoryHint; })[0];
@@ -91,6 +151,9 @@
       q('detect').innerHTML = '분류 <span class="chip">' + esc(c.name) + '</span><span class="rule-note">' + note + '</span>';
     }
 
+    /* 예시 시나리오의 주제·선택지를 고치면 "직접 입력"으로 바뀐다 (데이터팀 문장 대신 자동 문장 사용) */
+    function leavePreset() { if (Pickwise.state.preset) Pickwise.state.preset = null; }
+
     function clearErrors() {
       el.querySelectorAll('.field.error').forEach(function (f) { f.classList.remove('error'); });
       Pickwise.setMessage('');
@@ -98,6 +161,7 @@
 
     topicInput.addEventListener('input', function () {
       Pickwise.state.topic = topicInput.value;
+      leavePreset();
       clearErrors();
       renderDetect();
     });
@@ -106,6 +170,7 @@
       var i = e.target.getAttribute('data-i');
       if (i === null) return;
       Pickwise.state.options[+i] = e.target.value;
+      leavePreset();
       clearErrors();
     });
 
@@ -114,6 +179,7 @@
       var opts = Pickwise.state.options;
       if (!b || opts.length <= MIN) return;
       opts.splice(+b.getAttribute('data-del'), 1);
+      leavePreset();
       clearErrors();
       renderOptions();
     });
@@ -122,15 +188,30 @@
       var opts = Pickwise.state.options;
       if (opts.length >= MAX) return;
       opts.push('');
+      leavePreset();
       renderOptions();
       el.querySelector('#s1-opt-' + (opts.length - 1)).focus();
     });
 
-    q('demo').addEventListener('click', function () {
-      // 예시 데이터를 복사해서 상태에 채운다 (원본 예시는 그대로 둠)
-      var ex = JSON.parse(JSON.stringify(Pickwise.data.example));
-      Object.keys(ex).forEach(function (k) { Pickwise.state[k] = ex[k]; });
+    q('demo-toggle').addEventListener('click', function () {
+      var p = q('samples'), b = q('demo-toggle');
+      p.hidden = !p.hidden;
+      b.setAttribute('aria-expanded', String(!p.hidden));
+    });
+
+    q('samples').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-sample]');
+      if (!b) return;
+      var id = b.getAttribute('data-sample');
+      if (id === 'text-example') {
+        // 설명글 예시: 복사해서 상태에 채운다 (원본 예시는 그대로 둠)
+        var ex = JSON.parse(JSON.stringify(Pickwise.data.example));
+        Object.keys(ex).forEach(function (k) { Pickwise.state[k] = ex[k]; });
+        Pickwise.state.preset = null; Pickwise.state.facts = {};
+      } else if (!loadSample(id)) return;
       topicInput.value = Pickwise.state.topic;
+      q('samples').hidden = true;
+      q('demo-toggle').setAttribute('aria-expanded', 'false');
       clearErrors();
       renderOptions();
       renderDetect();

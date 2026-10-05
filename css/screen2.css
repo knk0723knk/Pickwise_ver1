@@ -42,3 +42,11 @@
 .s2-add { display: flex; gap: 8px; align-items: stretch; }
 .s2-add .field { flex: 1; min-width: 0; }
 .s2-add-btn { border-radius: 12px; padding: 0 16px; font-size: 14px; }
+
+/* 겹치는 기준 안내 */
+.s2-warn {
+  border: 1px solid var(--danger); border-radius: 12px; padding: 10px 12px; margin-top: -8px;
+  display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--danger);
+}
+.s2-warn p { margin: 0; display: flex; gap: 6px; align-items: flex-start; }
+.s2-warn svg { flex: none; margin-top: 2px; }

@@ -1,6 +1,8 @@
 /* ============================================================
    화면 4 · 정보 입력 (담당: 조원5)
-   - 선택지별로 알고 있는 내용 입력 → 키워드(data/keywords.js)로 기준별 별점(1~5) 자동 제안
+   - 선택지별로 알고 있는 내용 입력 → 키워드(data/keywords.js)로 기준별 점수 자동 제안
+   - 기준 점수는 0~100 (데이터팀 데이터셋과 같은 범위). 별 1개=0 · 2개=25 · 3개=50 · 4개=75 · 5개=100
+   - 데이터팀 예시는 실제 수치("28.9만원")와 자료 점수를 보여주고, 추정값에는 "추정" 표시
    - 별점은 사용자가 직접 고칠 수 있고, "모름"도 고를 수 있다
    - 정보가 없는 기준에는 "알아볼 질문" + "검색해보기" 링크
    - 자료 첨부: 파일 이름만 기록 (내용은 읽지도, 보내지도 않음)
@@ -10,6 +12,7 @@
   var LETTERS = ['A', 'B', 'C', 'D'];
   var MAX_FILES = 5;
   var current = 0;          // 지금 보고 있는 선택지 탭
+  var currentFor = null;    // 어느 결정의 탭인지 (새 결정이면 A 탭부터)
   var timer = null;
 
   /* ---------- 키워드로 별점 제안 ---------- */
@@ -26,7 +29,11 @@
     return null;
   }
 
-  /* 한 기준에 대한 제안: { score: 1~5 또는 null, word: 근거 단어 } */
+  /* 별 개수 ↔ 0~100 점수 */
+  function starsToScore(n) { return (n - 1) * 25; }
+  function scoreToStars(v) { return Math.round(v / 25) + 1; }
+
+  /* 한 기준에 대한 제안: { score: 0~100 또는 null, word: 근거 단어 } */
   function suggest(text, criterion) {
     var K = Pickwise.data.keywords;
     var k = K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
@@ -48,7 +55,7 @@
       words.push(word.trim());
     });
     if (!words.length) return { score: null, word: '' };
-    return { score: Math.max(1, Math.min(5, 3 + delta)), word: words[0] };
+    return { score: starsToScore(Math.max(1, Math.min(5, 3 + delta))), word: words[0] };
   }
 
   /* 기준 정보(질문·검색어) 찾기 */
@@ -61,6 +68,11 @@
       found = cats[cat].main.concat(cats[cat].more).filter(function (x) { return x.id === c.id; })[0];
       return !!found;
     });
+    if (!found && Pickwise.state.preset) {   // 데이터팀 예시 기준이면 그 설명을 질문으로
+      var sm = (Pickwise.data.samples || []).filter(function (x) { return x.id === Pickwise.state.preset.id; })[0];
+      var sc = sm && sm.criteria.filter(function (x) { return x.id === c.id; })[0];
+      if (sc && sc.help) found = { question: sc.help, search: '{option} ' + c.name };
+    }
     return found || { question: c.name + '에 대해 알고 있는 점이 있나요?', search: '{option} ' + c.name };
   }
 
@@ -95,6 +107,8 @@
     state.ratings = state.ratings || {};
     state.manual = state.manual || {};
     state.attachments = state.attachments || [];
+    var key = state.topic + '|' + state.options.join('|');
+    if (key !== currentFor) { current = 0; currentFor = key; }
     if (current >= state.options.length) current = 0;
     var hits = {};
     state.options.forEach(function (o) { hits[o] = autoRate(state, o); });
@@ -125,10 +139,10 @@
         '<div class="block">' +
           '<div class="block-head"><span class="num">1</span><label for="s4-text">' + esc(opt) + '에 대해 알고 있는 내용</label></div>' +
           '<div class="field s4-text"><textarea id="s4-text" rows="4" maxlength="600" placeholder="예: 날씨가 좋고 경치가 예쁘지만 물가가 비싼 편이에요.">' + esc(s.info[opt] || '') + '</textarea></div>' +
-          '<p class="hint">"비싸다", "가깝다"처럼 좋고 나쁨을 적으면 별점을 골라 드려요 <span class="rule-note">(규칙 기반)</span></p>' +
+          '<p class="hint">"비싸다", "가깝다"처럼 좋고 나쁨을 적으면 점수를 골라 드려요 <span class="rule-note">(규칙 기반)</span></p>' +
         '</div>' +
         '<div class="block">' +
-          '<div class="block-head"><span class="num">2</span><span class="label">기준별 점수</span><span class="s4-legend">1 아쉬움 · 3 보통 · 5 아주 좋음</span></div>' +
+          '<div class="block-head"><span class="num">2</span><span class="label">기준별 점수</span><span class="s4-legend">0 아쉬움 · 50 보통 · 100 아주 좋음</span></div>' +
           '<div class="s4-rates" data-s4="rates"></div>' +
         '</div>' +
         '<div class="block">' +
@@ -154,15 +168,19 @@
     function drawRates() {
       var s = Pickwise.state, opt = s.options[current];
       var r = s.ratings[opt], m = s.manual[opt];
+      var facts = (s.facts && s.facts[opt]) || {};
       q('rates').innerHTML = s.criteria.map(function (c) {
         var v = r[c.id], known = typeof v === 'number';
-        var tag;
-        if (m[c.id]) tag = known ? '<span class="s4-src manual">직접 고름</span>' : '<span class="s4-src unknown">모름</span>';
+        var tag, f = facts[c.id];
+        var stars1 = known ? scoreToStars(v) : 0;
+        if (f && f.text && !f.edited && known) {
+          tag = '<span class="s4-src fact">자료 · ' + esc(f.text) + '</span>' + (f.estimated ? '<span class="s4-est" title="시연용 추정값이에요. 실제 값은 확인이 필요해요.">추정</span>' : '');
+        } else if (m[c.id]) tag = known ? '<span class="s4-src manual">직접 고름</span>' : '<span class="s4-src unknown">모름</span>';
         else tag = known ? '<span class="s4-src auto">자동 · "' + esc(hits[opt][c.id]) + '"</span>' : '<span class="s4-src unknown">정보 없음</span>';
         var stars = '';
         for (var i = 1; i <= 5; i++) {
-          stars += '<button type="button" class="s4-star' + (known && i <= v ? ' on' : '') + '" data-star="' + i + '" data-c="' + esc(c.id) + '" ' +
-            'role="radio" aria-checked="' + (known && i === v) + '" aria-label="' + esc(c.name) + ' ' + i + '점">★</button>';
+          stars += '<button type="button" class="s4-star' + (known && i <= stars1 ? ' on' : '') + '" data-star="' + i + '" data-c="' + esc(c.id) + '" ' +
+            'role="radio" aria-checked="' + (known && i === stars1) + '" aria-label="' + esc(c.name) + ' ' + starsToScore(i) + '점">★</button>';
         }
         var ask = '';
         if (!known) {
@@ -176,7 +194,7 @@
           '<div class="s4-rate-top"><span class="s4-icon">' + icon(c.icon, 16) + '</span><span class="s4-name">' + esc(c.name) + '</span>' + tag + '</div>' +
           '<div class="s4-stars" role="radiogroup" aria-label="' + esc(c.name) + ' 점수">' + stars +
             '<button type="button" class="s4-unknown' + (known ? '' : ' on') + '" data-unknown="' + esc(c.id) + '" aria-pressed="' + !known + '">모름</button>' +
-            (known ? '<span class="s4-num">' + v + '점</span>' : '') +
+            (known ? '<span class="s4-num">' + Math.round(v) + '점</span>' : '') +
           '</div>' + ask +
         '</div>';
       }).join('');
@@ -209,6 +227,9 @@
     q('tabs').addEventListener('click', function (e) {
       var b = e.target.closest('[data-tab]');
       if (!b) return;
+      // 입력 직후 탭을 바꿔도 자동 점수가 빠지지 않게, 기다리던 계산을 바로 끝낸다
+      clearTimeout(timer);
+      Pickwise.state.options.forEach(function (o) { hits[o] = autoRate(Pickwise.state, o); });
       current = +b.getAttribute('data-tab');
       drawTabs(); drawPanel();
     });
@@ -220,11 +241,15 @@
       var unk = e.target.closest('[data-unknown]');
       var rm = e.target.closest('[data-rm]');
       if (star) {
-        s.ratings[opt][star.getAttribute('data-c')] = +star.getAttribute('data-star');
-        s.manual[opt][star.getAttribute('data-c')] = true;
+        var cid = star.getAttribute('data-c');
+        s.ratings[opt][cid] = starsToScore(+star.getAttribute('data-star'));
+        s.manual[opt][cid] = true;
+        if (s.facts && s.facts[opt] && s.facts[opt][cid]) s.facts[opt][cid].edited = true;
       } else if (unk) {
-        s.ratings[opt][unk.getAttribute('data-unknown')] = null;
-        s.manual[opt][unk.getAttribute('data-unknown')] = true;
+        var uid = unk.getAttribute('data-unknown');
+        s.ratings[opt][uid] = null;
+        s.manual[opt][uid] = true;
+        if (s.facts && s.facts[opt] && s.facts[opt][uid]) s.facts[opt][uid].edited = true;
       } else if (rm) {
         s.attachments.splice(+rm.getAttribute('data-rm'), 1);
         drawFiles();
@@ -239,6 +264,8 @@
   }
 
   function validate(state) {
+    clearTimeout(timer);
+    state.options.forEach(function (o) { autoRate(state, o); });   // 마지막 입력도 점수에 반영
     var any = state.options.some(function (o) { return knownCount(state, o) > 0; });
     if (!any) return '비교하려면 설명을 적거나 별점을 하나 이상 골라 주세요.';
     return '';

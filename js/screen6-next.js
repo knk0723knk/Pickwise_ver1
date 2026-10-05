@@ -19,7 +19,7 @@
       return (item.related || []).reduce(function (a, id) { return a + (r.shares[id] || 0); }, 0);
     };
     list.sort(function (a, b) { return rel(b) - rel(a); });
-    return list.map(function (item) {
+    var items = list.map(function (item) {
       var vars = { winner: winner };
       return {
         title: item.title,
@@ -29,6 +29,13 @@
         hot: rel(item) > 0
       };
     });
+    // 데이터팀 예시라면 데이터팀이 정한 다음 결정을 맨 위에 (제목만 있으므로 선택지는 직접 입력)
+    var p = Pickwise.explain.presetOf(state);
+    if (p && p.sample.next.length) {
+      var own = p.sample.next.map(function (t) { return { title: t, topic: winner + ' 다음 고민: ' + t, options: ['', ''], icon: 'spark', hot: true }; });
+      items = own.concat(items).slice(0, 6);
+    }
+    return items;
   }
 
   function render(el, state) {

@@ -1,15 +1,15 @@
 /* ============================================================
-   점수 계산 엔진 (담당: 조원6)
-   - 비중(%) = 기준의 중요도 점수(0~10) ÷ 모든 기준 중요도 점수의 합
-   - 종합 점수 = Σ (별점 ÷ 5 × 비중) × 100   → 0~100점
-   - 별점이 null(모름·정보 없음)이면 3점(보통)으로 계산하고, "정보 부족"으로 따로 센다
+   점수 계산 엔진 (담당: 조원6) — 데이터팀 데이터셋과 같은 방식 (10/05 결정)
+   - 기준 점수: 0~100 (state.ratings) · 중요도: 0~100 (state.weights)
+   - 총점 = Σ(기준 점수 × 중요도) ÷ Σ(중요도)        → 0~100점
+   - 기준 점수가 null(모름·정보 없음)이면 50점(보통)으로 계산하고, "정보 부족"으로 따로 센다
    - 사용:
        var r = Pickwise.scoring.compute(Pickwise.state);
        r.ranking[0].name   // 1위 선택지
-       r.shares.budget     // 예산 비중(%) — 화면 표시용 정수, 합계 100
+       r.shares.cost       // 그 기준의 비중(%) — 화면 표시용 정수, 합계 100
    ============================================================ */
 (function () {
-  var NEUTRAL = 3;
+  var NEUTRAL = 50;
 
   /* 정수 목록을 합계가 정확히 total 이 되게 반올림 (가장 큰 나머지 방식) */
   function roundTo(values, total) {
@@ -54,7 +54,7 @@
         var r = ratingOf(state, name, c.id);
         if (r === null) unknown.push(c.id);
         var used = r === null ? NEUTRAL : r;
-        var contrib = used / 5 * frac[c.id] * 100;
+        var contrib = used * frac[c.id];
         per[c.id] = { rating: r, used: used, contrib: contrib };
         total += contrib;
       });
@@ -69,5 +69,15 @@
     };
   }
 
-  Pickwise.scoring = { compute: compute, shares: shares, roundTo: roundTo, NEUTRAL: NEUTRAL };
+  /* 예시 시나리오를 불러온 뒤 사용자가 기준·중요도·점수·선택지를 바꿨는지 확인하는 표시값 */
+  function signature(state) {
+    var ids = state.criteria.map(function (c) { return c.id; }).sort();
+    return JSON.stringify({
+      o: state.options,
+      c: ids.map(function (id) { return [id, state.weights[id]]; }),
+      r: state.options.map(function (o) { return ids.map(function (id) { return ratingOf(state, o, id); }); })
+    });
+  }
+
+  Pickwise.scoring = { compute: compute, shares: shares, roundTo: roundTo, signature: signature, NEUTRAL: NEUTRAL };
 })();
