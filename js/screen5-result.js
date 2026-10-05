@@ -68,6 +68,8 @@
         bars + '</div>';
     }).join('');
 
+    var anyUnknown = r.options.some(function (o) { return o.unknown.length > 0; });
+
     /* ---------- 가장 큰 차이 ---------- */
     var biggest = t.biggest.length
       ? t.biggest.map(function (b) {
@@ -97,8 +99,10 @@
         (tie ? '결과 요약' : esc(Pickwise.josa(winner.name, '이가')) + ' 더 나은 핵심 이유') + '</div><p>' + esc(t.summary) + '</p></div></section>' +
 
       '<section class="s5-box"><div class="s5-box-title">' + icon('chart', 16) + '항목별 비교</div>' +
-        '<div class="s5-legend">' + legend + '</div>' + rows +
-        '<p class="hint">막대는 기준별 점수(100점 만점)예요. 비중이 클수록 종합 점수에 크게 반영돼요.</p></section>' +
+        // 그래프 읽는 법은 그래프보다 먼저 (제목 바로 아래)
+        '<p class="hint s5-howto">기준별 점수(100점 만점)예요. 비중이 클수록 종합 점수에 크게 반영돼요.</p>' +
+        '<div class="s5-legend">' + legend + (anyUnknown ? '<span><i class="s5-key-unknown"></i>모름 (50점으로 계산)</span>' : '') + '</div>' +
+        rows + '</section>' +
 
       '<section class="s5-box"><div class="s5-box-title">' + icon('target', 16) + '가장 큰 차이</div><div class="s5-diffs">' + biggest + '</div></section>' +
 
