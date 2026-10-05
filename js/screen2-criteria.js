@@ -23,9 +23,11 @@
       var common = by("common"), own = by("main");
       return { common: common, own: own, main: common.concat(own), more: by("more"), overlap: sm.overlap || [] };
     }
+    // 직접 입력: 데이터셋 기준 (공통 기준은 분류마다 다름 — 사용 기간 / 소요 시간)
     var all = Pickwise.data.criteria;
     var cat = all.categories[state.category] || all.categories.etc;
-    return { common: all.common, own: cat.main, main: all.common.concat(cat.main), more: cat.more, overlap: [] };
+    var plain = function (list) { return list.map(function (c) { return { id: c.id, name: c.name, icon: c.icon, default: c.default }; }); };
+    return { common: plain(cat.common), own: plain(cat.main), main: plain(cat.common.concat(cat.main)), more: plain(cat.more), overlap: cat.overlap || [] };
   }
   function catName(state) {
     var c = Pickwise.data.topics.categories.filter(function (x) { return x.id === state.category; })[0];

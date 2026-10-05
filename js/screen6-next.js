@@ -29,10 +29,11 @@
         hot: rel(item) > 0
       };
     });
-    // 데이터팀 예시라면 데이터팀이 정한 다음 결정을 맨 위에 (제목만 있으므로 선택지는 직접 입력)
+    // 데이터셋의 다음 결정(예시라면 그 예시의 것, 직접 입력이면 같은 분류의 것)을 맨 위에. 제목만 있으므로 선택지는 직접 입력
     var p = Pickwise.explain.presetOf(state);
-    if (p && p.sample.next.length) {
-      var own = p.sample.next.map(function (t) { return { title: t, topic: winner + ' 다음 고민: ' + t, options: ['', ''], icon: 'spark', hot: true }; });
+    var titles = p ? p.sample.next : ((Pickwise.data.datasetNext || {})[state.category] || []);
+    if (titles.length) {
+      var own = titles.map(function (t) { return { title: t, topic: winner + ' 다음 고민: ' + t, options: ['', ''], icon: 'spark', hot: true }; });
       items = own.concat(items).slice(0, 6);
     }
     return items;

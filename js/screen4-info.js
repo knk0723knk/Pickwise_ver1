@@ -36,10 +36,12 @@
   /* 한 기준에 대한 제안: { score: 0~100 또는 null, word: 근거 단어 } */
   function suggest(text, criterion) {
     var K = Pickwise.data.keywords;
-    var k = K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
+    var KD = Pickwise.data.keywordsDataset || {};
+    var k = KD[criterion.id] || K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
     if (criterion.custom) k = { aliases: [criterion.name].concat(criterion.name.split(/\s+/)), pos: [], neg: [] };
     var delta = 0, words = [];
     clauses(text).forEach(function (p) {
+      if (k.needsAlias && !find(p, k.aliases)) return;   // 데이터셋 기준: 그 기준을 가리키는 말이 있는 조각만
       var s = 0, word = find(p, k.neg);
       if (word) s = -1;
       else if ((word = find(p, k.pos))) s = 1;
@@ -60,12 +62,11 @@
 
   /* 기준 정보(질문·검색어) 찾기 */
   function meta(c) {
-    var all = Pickwise.data.criteria, cats = all.categories;
-    var found = all.common.filter(function (x) { return x.id === c.id; })[0] || null;
+    var cats = Pickwise.data.criteria.categories, found = null;
     var order = [Pickwise.state.category].concat(Object.keys(cats));   // 지금 분류의 질문을 먼저
     order.some(function (cat) {
       if (found || !cats[cat]) return !!found;
-      found = cats[cat].main.concat(cats[cat].more).filter(function (x) { return x.id === c.id; })[0];
+      found = cats[cat].common.concat(cats[cat].main, cats[cat].more).filter(function (x) { return x.id === c.id; })[0];
       return !!found;
     });
     if (!found && Pickwise.state.preset) {   // 데이터팀 예시 기준이면 그 설명을 질문으로

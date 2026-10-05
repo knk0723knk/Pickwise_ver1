@@ -1,114 +1,943 @@
-/* 비교 기준 (담당: 조원3)
-   ⚠ 10/05 Claude 임시안 — 데이터팀 리서치가 도착하면 교체한다.
-   구조 (10/05 팀 결정):
-   - common: 모든 분류에 함께 보여주는 공통 기준 (비용, 시간 등)
-   - categories.분류.main: 그 분류의 고유 기준 (2번 화면 카드) / default: true 는 처음부터 체크
-   - categories.분류.more: "이런 기준도 고려해보세요"에 보이는 추가 기준
-   항목 설명:
-   - icon: 아이콘 이름 (js/icons.js)
-   - question: 4번 화면에서 정보가 없을 때 보여줄 "알아볼 질문"
-   - search: "검색해보기"에 쓸 검색어 틀 ({option} = 선택지 이름)
-   - 같은 뜻의 기준은 분류가 달라도 같은 id를 쓴다 (점수 단어 keywords.js를 함께 쓰기 위해서) */
+/* 분류별 비교 기준 — 직접 입력에도 쓰는 데이터셋 기준 (담당: 데이터팀 · 정리: 조원3)
+   원본: 데이터팀 PICKWISE_dataset v2.4.0 (기준일 2026-10-05) · tools/convert-samples.js 로 자동 생성 — 직접 고치지 말고 원본 수정 후 다시 변환
+   - categories.분류.common: 공통 기준 (데이터셋: 초기 비용 + 사용 기간[주거·소비] / 소요 시간[여가·자기계발·금융생활])
+   - categories.분류.main: 카드로 보이는 기준 (데이터셋 primary) · default: true = 데이터셋에서 기본 선택
+   - categories.분류.more: "이런 기준도 고려해보세요" (데이터셋 additional)
+   - better: low = 낮을수록 좋음 / high = 높을수록 좋음
+   - 기타(etc)는 데이터셋에 시나리오가 없어 공통 기준 + Claude 임시안 */
 Pickwise.data.criteria = {
-  "common": [
-    { "id": "cost",         "name": "비용",   "icon": "wallet", "default": true, "question": "처음 드는 돈과 매달 드는 돈은 각각 얼마인가요?", "search": "{option} 비용" },
-    { "id": "time",         "name": "시간",   "icon": "clock",  "default": true, "question": "준비하고 이용하는 데 시간이 얼마나 드나요?", "search": "{option} 소요 시간" },
-    { "id": "satisfaction", "name": "만족도", "icon": "smile",  "default": true, "question": "고른 뒤 얼마나 만족할 것 같나요? 써 본 사람들의 평은 어떤가요?", "search": "{option} 후기" }
-  ],
-
-  "categories": {
-    "housing": {
-      "main": [
-        { "id": "commute",     "name": "통근 시간",       "icon": "bus",    "default": true,  "question": "회사까지 편도 몇 분 걸리나요? 환승은 몇 번인가요?", "search": "{option} 출퇴근" },
-        { "id": "safety",      "name": "동네 치안",       "icon": "shield", "default": true,  "question": "밤길이 밝고 안전한가요?", "search": "{option} 치안" },
-        { "id": "space",       "name": "방 크기·구조",    "icon": "home",   "default": true,  "question": "평수, 방 구조, 수납공간은 충분한가요?", "search": "{option} 구조" },
-        { "id": "convenience", "name": "생활 편의시설",   "icon": "store",  "default": false, "question": "마트, 병원, 편의점이 가까운가요?", "search": "{option} 편의시설" },
-        { "id": "condition",   "name": "건물 상태·채광",  "icon": "sun",    "default": false, "question": "곰팡이, 누수, 햇빛 드는 정도는 어떤가요?", "search": "{option} 채광" }
-      ],
-      "more": [
-        { "id": "contract", "name": "계약 안전성",     "icon": "doc",     "question": "등기부등본상 대출이나 권리 관계에 문제가 없나요?", "search": "전세 계약 주의사항" },
-        { "id": "upkeep",   "name": "관리비",          "icon": "receipt", "question": "관리비에 무엇이 포함되고 얼마인가요?", "search": "{option} 관리비" },
-        { "id": "noise",    "name": "소음",            "icon": "volume",  "question": "도로, 이웃, 공사 소음이 있나요?", "search": "{option} 소음" },
-        { "id": "transit",  "name": "대중교통 접근성", "icon": "train",   "question": "지하철역이나 버스 정류장까지 몇 분인가요?", "search": "{option} 역세권" }
-      ]
+ "categories": {
+  "housing": {
+   "common": [
+    {
+     "id": "initial_cost",
+     "name": "초기 비용",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "처음에 드는 돈은 얼마인가요? (보증금·가격·첫 달 비용 등)",
+     "search": "{option} 초기 비용"
     },
-
-    "shopping": {
-      "main": [
-        { "id": "quality",    "name": "성능·품질", "icon": "star",    "default": true,  "question": "내가 주로 쓸 기능의 성능은 어떤가요?", "search": "{option} 성능 비교" },
-        { "id": "durability", "name": "내구성",    "icon": "shield",  "default": true,  "question": "고장이나 파손 사례가 많지 않나요?", "search": "{option} 고장 내구성" },
-        { "id": "design",     "name": "디자인",    "icon": "palette", "default": true,  "question": "색상, 크기, 모양이 마음에 드나요?", "search": "{option} 실물 디자인" },
-        { "id": "service",    "name": "A/S·보증",  "icon": "tool",    "default": false, "question": "보증 기간과 서비스센터 접근성은 어떤가요?", "search": "{option} AS 보증" },
-        { "id": "reviews",    "name": "사용 후기", "icon": "chat",    "default": false, "question": "실사용자들의 장단점 후기는 어떤가요?", "search": "{option} 실사용 후기" }
-      ],
-      "more": [
-        { "id": "running",  "name": "유지비",           "icon": "receipt", "question": "소모품, 전기료, 보험료 같은 추가 비용이 있나요?", "search": "{option} 유지비" },
-        { "id": "resale",   "name": "중고 가격",        "icon": "refresh", "question": "나중에 팔 때 값을 잘 받을 수 있나요?", "search": "{option} 중고 시세" },
-        { "id": "compat",   "name": "기존 기기와 호환", "icon": "link",    "question": "지금 쓰는 기기, 액세서리와 잘 맞나요?", "search": "{option} 호환" },
-        { "id": "portable", "name": "크기·무게",        "icon": "box",     "question": "들고 다니거나 둘 공간에 맞나요?", "search": "{option} 무게 크기" }
-      ]
-    },
-
-    "leisure": {
-      "main": [
-        { "id": "fun",       "name": "재미·흥미",      "icon": "spark",    "default": true,  "question": "하면서 즐거울 것 같나요? 꼭 해 보고 싶은 게 있나요?", "search": "{option} 후기" },
-        { "id": "transport", "name": "이동 편의성",    "icon": "bus",      "default": true,  "question": "오가는 길이 편한가요? 이동 시간은 얼마나 걸리나요?", "search": "{option} 가는 법" },
-        { "id": "rest",      "name": "휴식·힐링",      "icon": "beach",    "default": true,  "question": "푹 쉬면서 재충전할 수 있나요?", "search": "{option} 힐링" },
-        { "id": "weather",   "name": "날씨",           "icon": "sun",      "default": false, "question": "가려는 때의 날씨는 어떤가요?", "search": "{option} 날씨" },
-        { "id": "sights",    "name": "볼거리·즐길거리","icon": "camera",   "default": false, "question": "꼭 보고 싶은 곳이나 즐길 거리가 있나요?", "search": "{option} 가볼만한 곳" },
-        { "id": "food",      "name": "음식",           "icon": "utensils", "default": false, "question": "먹고 싶은 음식이 있나요? 입에 맞을까요?", "search": "{option} 맛집" }
-      ],
-      "more": [
-        { "id": "safety", "name": "안전",           "icon": "shield", "question": "다치거나 위험한 일은 없을까요?", "search": "{option} 주의사항" },
-        { "id": "crowd",  "name": "혼잡도",         "icon": "users",  "question": "사람이 많이 붐비지는 않나요?", "search": "{option} 붐비는 시간" },
-        { "id": "people", "name": "함께하는 사람",  "icon": "users",  "question": "같이 할 사람이 있나요? 혼자서도 괜찮나요?", "search": "{option} 혼자" },
-        { "id": "health", "name": "건강",           "icon": "heart",  "question": "몸과 마음 건강에 도움이 되나요?", "search": "{option} 효과" }
-      ]
-    },
-
-    "selfdev": {
-      "main": [
-        { "id": "careervalue", "name": "커리어 도움",     "icon": "chart",  "default": true,  "question": "지금 일이나 다음 이직에 실제로 도움이 되나요?", "search": "{option} 취업 이직 도움" },
-        { "id": "effort",      "name": "난이도·부담",     "icon": "tool",   "default": true,  "question": "퇴근 후에도 꾸준히 할 수 있는 난이도인가요?", "search": "{option} 난이도" },
-        { "id": "outcome",     "name": "눈에 보이는 성과","icon": "badge",  "default": true,  "question": "점수, 합격, 포트폴리오처럼 결과가 남나요?", "search": "{option} 합격률" },
-        { "id": "fun",         "name": "재미·흥미",       "icon": "spark",  "default": false, "question": "관심 있는 분야라 계속할 수 있을까요?", "search": "{option} 후기" },
-        { "id": "learning",    "name": "배울 점",         "icon": "book",   "default": false, "question": "새로 배우거나 얻는 것이 있나요?", "search": "{option} 커리큘럼" }
-      ],
-      "more": [
-        { "id": "health",     "name": "건강",              "icon": "heart",    "question": "몸과 마음 건강에 도움이 되나요? (운동이라면 소모 열량·부상 위험)", "search": "{option} 효과" },
-        { "id": "schedule",   "name": "일정 유연성",       "icon": "calendar", "question": "야근이 있어도 일정을 맞출 수 있나요?", "search": "{option} 시간표" },
-        { "id": "people",     "name": "함께하는 사람",     "icon": "users",    "question": "같이 공부할 사람이나 스터디가 있나요?", "search": "{option} 스터디" },
-        { "id": "reversible", "name": "중간에 그만둘 수 있는지", "icon": "refresh", "question": "맞지 않으면 환불하거나 그만둘 수 있나요?", "search": "{option} 환불 규정" }
-      ]
-    },
-
-    "finance": {
-      "main": [
-        { "id": "return",    "name": "수익·혜택",          "icon": "chart",  "default": true,  "question": "금리, 수익률, 할인·적립 혜택은 어느 정도인가요?", "search": "{option} 금리 혜택" },
-        { "id": "risk",      "name": "위험·안정성",        "icon": "shield", "default": true,  "question": "원금을 잃을 수 있나요? 예금자 보호가 되나요?", "search": "{option} 원금 보장" },
-        { "id": "liquidity", "name": "필요할 때 꺼내 쓰기","icon": "wallet", "default": true,  "question": "중간에 돈이 필요하면 깨거나 뺄 수 있나요? 손해는요?", "search": "{option} 중도해지" },
-        { "id": "tax",       "name": "세금·가입 조건",     "icon": "doc",    "default": false, "question": "비과세·소득공제 혜택이나 가입 조건(나이·소득)이 있나요?", "search": "{option} 가입 조건 소득공제" }
-      ],
-      "more": [
-        { "id": "fee",      "name": "수수료·연회비", "icon": "receipt", "question": "수수료나 연회비가 있나요?", "search": "{option} 수수료" },
-        { "id": "longterm", "name": "장기적 영향",   "icon": "chart",   "question": "몇 년 뒤의 나에게 어떤 도움이 되나요?", "search": "{option} 장기" },
-        { "id": "effort",   "name": "관리 수고",     "icon": "tool",    "question": "신경 쓰고 관리할 일이 많나요?", "search": "{option} 관리" }
-      ]
-    },
-
-    "etc": {
-      "main": [
-        { "id": "risk",     "name": "위험·불확실성",  "icon": "alert",  "default": true,  "question": "잘못될 수 있는 점은 무엇인가요?", "search": "{option} 단점" },
-        { "id": "longterm", "name": "장기적 영향",    "icon": "chart",  "default": true,  "question": "1년 뒤의 나에게 어떤 영향을 줄까요?", "search": "{option} 장단점" },
-        { "id": "effort",   "name": "노력·수고",      "icon": "tool",   "default": false, "question": "준비하거나 신경 쓸 일이 많나요?", "search": "{option} 준비" },
-        { "id": "people",   "name": "주변 사람 영향", "icon": "users",  "default": false, "question": "가족, 친구, 동료에게 어떤 영향이 있나요?", "search": "{option} 경험담" },
-        { "id": "fun",      "name": "재미·흥미",      "icon": "spark",  "default": false, "question": "하면서 즐거울 것 같나요?", "search": "{option} 재미" }
-      ],
-      "more": [
-        { "id": "reversible", "name": "되돌릴 수 있는지", "icon": "refresh", "question": "마음이 바뀌면 되돌릴 수 있나요?", "search": "{option} 취소 환불" },
-        { "id": "learning",   "name": "배울 점",          "icon": "book",    "question": "새로 배우거나 얻는 경험이 있나요?", "search": "{option} 경험" },
-        { "id": "health",     "name": "건강",             "icon": "heart",   "question": "몸과 마음 건강에 어떤 영향이 있나요?", "search": "{option} 건강" }
-      ]
+    {
+     "id": "usable_duration",
+     "name": "사용 기간",
+     "icon": "clock",
+     "default": true,
+     "better": "high",
+     "question": "얼마나 오래 쓸 수 있나요? (계약기간·배터리 등)",
+     "search": "{option} 사용 기간"
     }
+   ],
+   "main": [
+    {
+     "id": "support_cap",
+     "name": "지원한도",
+     "icon": "wallet",
+     "default": true,
+     "better": "high",
+     "question": "지원한도는 얼마인가요?",
+     "search": "{option} 지원한도",
+     "help": "전세금 지원한도 (원)"
+    },
+    {
+     "id": "maximum_tenure",
+     "name": "거주기간",
+     "icon": "clock",
+     "default": true,
+     "better": "high",
+     "question": "거주기간은 어느 정도인가요?",
+     "search": "{option} 거주기간",
+     "help": "최대 거주기간 (개월)"
+    },
+    {
+     "id": "scenario_monthly_rent",
+     "name": "월 임대료",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "월 임대료는 얼마인가요?",
+     "search": "{option} 월 임대료",
+     "help": "지원한도 전액 사용·연 2.2%·금리우대 적용 전으로 계산한 월 임대료예요. 관리비·공과금은 제외하며 실제 청구액이 아니에요."
+    },
+    {
+     "id": "deposit_ratio",
+     "name": "보증금 비율",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "보증금 비율은 어느 정도인가요?",
+     "search": "{option} 보증금 비율",
+     "help": "지원한도 대비 기본 보증금 비율 (%) — initial_cost / support_cap * 100"
+    },
+    {
+     "id": "per_person_support_cap",
+     "name": "개인 지원한도",
+     "icon": "wallet",
+     "default": true,
+     "better": "high",
+     "question": "개인 지원한도는 얼마인가요?",
+     "search": "{option} 개인 지원한도",
+     "help": "주택 전체 지원한도를 인원수로 나눈 비교용 환산액이에요. 개인에게 지급되는 금액이 아니에요."
+    },
+    {
+     "id": "co_resident_count",
+     "name": "동거인 수",
+     "icon": "users",
+     "default": true,
+     "better": "low",
+     "question": "동거인 수는 어느 정도인가요?",
+     "search": "{option} 동거인 수",
+     "help": "함께 사는 사람 수 (명) — resident_count - 1"
+    },
+    {
+     "id": "household_support_cap",
+     "name": "전체 지원한도",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "전체 지원한도는 얼마인가요?",
+     "search": "{option} 전체 지원한도",
+     "help": "주택 전체 지원한도 (원)"
+    }
+   ],
+   "more": [
+    {
+     "id": "maximum_renewals",
+     "name": "재계약",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "재계약은 어느 정도인가요?",
+     "search": "{option} 재계약",
+     "help": "혼인 추가연장 제외 최대 재계약 횟수 (회)"
+    },
+    {
+     "id": "renewal_months",
+     "name": "연장기간",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "연장기간은 어느 정도인가요?",
+     "search": "{option} 연장기간",
+     "help": "최초 계약 이후 최대 연장기간 (개월) — maximum_tenure - usable_duration"
+    },
+    {
+     "id": "published_min_rate",
+     "name": "최저금리",
+     "icon": "chart",
+     "default": false,
+     "better": "low",
+     "question": "최저금리는 어느 정도인가요?",
+     "search": "{option} 최저금리",
+     "help": "공시 기본금리 범위의 하단이에요. 본인에게 적용되는 확정금리나 우대 후 최저금리가 아니에요."
+    },
+    {
+     "id": "published_max_rate",
+     "name": "최고금리",
+     "icon": "chart",
+     "default": false,
+     "better": "low",
+     "question": "최고금리는 어느 정도인가요?",
+     "search": "{option} 최고금리",
+     "help": "공시 기본금리 범위의 상단이에요. 본인에게 적용되는 확정금리는 아니에요."
+    },
+    {
+     "id": "net_funded_principal",
+     "name": "지원원금",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "지원원금은 얼마인가요?",
+     "search": "{option} 지원원금",
+     "help": "지원한도에서 기본 보증금을 뺀 계산값이에요. 실제 지원 확정액이 아니에요."
+    },
+    {
+     "id": "scenario_first_term_rent",
+     "name": "총 임대료",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "총 임대료는 얼마인가요?",
+     "search": "{option} 총 임대료",
+     "help": "위 월 임대료 시나리오에 최초 계약기간을 곱한 임대료 합계예요. 보증금·관리비·공과금은 제외해요."
+    },
+    {
+     "id": "household_base_deposit",
+     "name": "전체 보증금",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "전체 보증금은 얼마인가요?",
+     "search": "{option} 전체 보증금",
+     "help": "전체 인원 기본 보증금 합계 (원) — initial_cost * resident_count"
+    },
+    {
+     "id": "per_person_net_principal",
+     "name": "개인 지원원금",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "개인 지원원금은 얼마인가요?",
+     "search": "{option} 개인 지원원금",
+     "help": "전체 지원한도에서 전원 기본 보증금을 뺀 뒤 인원수로 나눈 계산값이에요."
+    }
+   ],
+   "overlap": [
+    {
+     "ids": [
+      "scenario_monthly_rent",
+      "scenario_first_term_rent"
+     ],
+     "message": "월 임대료와 계약기간 임대료 합계는 같은 비용을 다른 기간으로 표현하므로 필요에 따라 하나만 선택해 주세요."
+    },
+    {
+     "ids": [
+      "usable_duration",
+      "maximum_tenure",
+      "maximum_renewals",
+      "renewal_months"
+     ],
+     "message": "관련 원자료와 파생값의 중복 가중에 유의해 주세요."
+    },
+    {
+     "ids": [
+      "scenario_monthly_personal_rent",
+      "scenario_first_term_personal_rent"
+     ],
+     "message": "월 임대료와 계약기간 임대료 합계는 같은 비용을 다른 기간으로 표현하므로 필요에 따라 하나만 선택해 주세요."
+    },
+    {
+     "ids": [
+      "household_support_cap",
+      "per_person_support_cap",
+      "per_person_net_principal"
+     ],
+     "message": "관련 원자료와 파생값의 중복 가중에 유의해 주세요."
+    }
+   ]
+  },
+  "shopping": {
+   "common": [
+    {
+     "id": "initial_cost",
+     "name": "초기 비용",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "처음에 드는 돈은 얼마인가요? (보증금·가격·첫 달 비용 등)",
+     "search": "{option} 초기 비용"
+    },
+    {
+     "id": "usable_duration",
+     "name": "사용 기간",
+     "icon": "clock",
+     "default": true,
+     "better": "high",
+     "question": "얼마나 오래 쓸 수 있나요? (계약기간·배터리 등)",
+     "search": "{option} 사용 기간"
+    }
+   ],
+   "main": [
+    {
+     "id": "weight",
+     "name": "무게",
+     "icon": "box",
+     "default": true,
+     "better": "low",
+     "question": "무게는 어느 정도인가요?",
+     "search": "{option} 무게",
+     "help": "본체 무게 (kg)"
+    },
+    {
+     "id": "screen_diagonal",
+     "name": "화면 크기",
+     "icon": "camera",
+     "default": true,
+     "better": "high",
+     "question": "화면 크기는 어느 정도인가요?",
+     "search": "{option} 화면 크기",
+     "help": "화면 대각선 (cm)"
+    },
+    {
+     "id": "storage_capacity",
+     "name": "저장공간",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "저장공간은 어느 정도인가요?",
+     "search": "{option} 저장공간",
+     "help": "기본형 저장공간 (GB)"
+    },
+    {
+     "id": "memory_capacity",
+     "name": "메모리",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "메모리는 어느 정도인가요?",
+     "search": "{option} 메모리",
+     "help": "기본형 메모리 용량 (GB)"
+    },
+    {
+     "id": "anc_supported",
+     "name": "노이즈 캔슬링",
+     "icon": "star",
+     "default": false,
+     "better": "high",
+     "question": "노이즈 캔슬링이 되나요?",
+     "search": "{option} 노이즈 캔슬링",
+     "help": "ANC 기능 지원 여부예요. 소음 차단 성능이나 만족도 점수가 아니에요."
+    },
+    {
+     "id": "transparency_supported",
+     "name": "주변음 듣기",
+     "icon": "star",
+     "default": false,
+     "better": "high",
+     "question": "주변음 듣기가 되나요?",
+     "search": "{option} 주변음 듣기",
+     "help": "이어버드를 착용한 상태에서 주변 소리를 듣는 기능의 지원 여부예요."
+    },
+    {
+     "id": "wireless_charging_supported",
+     "name": "무선충전",
+     "icon": "star",
+     "default": false,
+     "better": "high",
+     "question": "무선충전이 되나요?",
+     "search": "{option} 무선충전",
+     "help": "충전 케이스의 무선충전 지원 여부예요."
+    },
+    {
+     "id": "case_playback_duration",
+     "name": "총 재생시간",
+     "icon": "clock",
+     "default": true,
+     "better": "high",
+     "question": "총 재생시간은 어느 정도인가요?",
+     "search": "{option} 총 재생시간",
+     "help": "ANC를 켠 상태에서 케이스 충전까지 포함한 최대 총 음악 재생시간이에요."
+    }
+   ],
+   "more": [
+    {
+     "id": "thunderbolt_port_count",
+     "name": "연결 포트",
+     "icon": "star",
+     "default": false,
+     "better": "high",
+     "question": "연결 포트는 어느 정도인가요?",
+     "search": "{option} 연결 포트",
+     "help": "썬더볼트 4 USB-C 포트 개수예요. 모든 종류의 연결 포트를 합산한 값은 아니에요."
+    },
+    {
+     "id": "battery_capacity",
+     "name": "배터리 용량",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "배터리 용량은 어느 정도인가요?",
+     "search": "{option} 배터리 용량",
+     "help": "배터리 용량 (Wh)"
+    },
+    {
+     "id": "gpu_core_count",
+     "name": "그래픽 코어",
+     "icon": "star",
+     "default": false,
+     "better": "high",
+     "question": "그래픽 코어는 어느 정도인가요?",
+     "search": "{option} 그래픽 코어",
+     "help": "기본형 GPU 코어 수예요. 실제 그래픽 성능 점수를 뜻하지 않아요."
+    },
+    {
+     "id": "cpu_core_count",
+     "name": "CPU 코어",
+     "icon": "star",
+     "default": false,
+     "better": "high",
+     "question": "CPU 코어는 어느 정도인가요?",
+     "search": "{option} CPU 코어",
+     "help": "CPU 코어 수예요. 실제 작업 성능 점수를 뜻하지 않아요."
+    },
+    {
+     "id": "display_pixel_count",
+     "name": "해상도",
+     "icon": "camera",
+     "default": false,
+     "better": "high",
+     "question": "해상도는 어느 정도인가요?",
+     "search": "{option} 해상도",
+     "help": "화면 가로 픽셀 수와 세로 픽셀 수의 곱이에요. 화면 품질 전체를 평가하는 값은 아니에요."
+    },
+    {
+     "id": "wireless_web_duration",
+     "name": "웹 사용시간",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "웹 사용시간은 어느 정도인가요?",
+     "search": "{option} 웹 사용시간",
+     "help": "제조사 시험 기준 최대 무선 인터넷 사용시간이에요."
+    },
+    {
+     "id": "case_weight",
+     "name": "케이스 무게",
+     "icon": "box",
+     "default": false,
+     "better": "low",
+     "question": "케이스 무게는 어느 정도인가요?",
+     "search": "{option} 케이스 무게",
+     "help": "충전 케이스 무게 (g)"
+    },
+    {
+     "id": "total_carry_weight",
+     "name": "전체 무게",
+     "icon": "box",
+     "default": false,
+     "better": "low",
+     "question": "전체 무게는 어느 정도인가요?",
+     "search": "{option} 전체 무게",
+     "help": "이어버드 2개와 케이스 총무게 (g) — earbud_weight * 2 + case_weight"
+    },
+    {
+     "id": "anc_off_duration",
+     "name": "일반 재생시간",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "일반 재생시간은 어느 정도인가요?",
+     "search": "{option} 일반 재생시간",
+     "help": "ANC를 끈 상태에서 한 번 충전으로 최대 연속 재생 가능한 시간이에요."
+    },
+    {
+     "id": "anc_off_case_duration",
+     "name": "일반 총시간",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "일반 총시간은 어느 정도인가요?",
+     "search": "{option} 일반 총시간",
+     "help": "ANC를 끈 상태에서 케이스 충전까지 포함한 최대 총 음악 재생시간이에요."
+    },
+    {
+     "id": "case_envelope_volume",
+     "name": "케이스 크기",
+     "icon": "box",
+     "default": false,
+     "better": "low",
+     "question": "케이스 크기는 어느 정도인가요?",
+     "search": "{option} 케이스 크기",
+     "help": "외형 가로·세로·깊이를 곱한 직육면체 환산부피예요. 실제 곡면 케이스의 체적은 아니에요."
+    }
+   ],
+   "overlap": [
+    {
+     "ids": [
+      "usable_duration",
+      "wireless_web_duration",
+      "battery_capacity"
+     ],
+     "message": "재생시간·웹 사용시간·배터리 용량은 관련성이 있지만 시험 조건과 의미가 달라요. 중복 가중에 유의해 주세요."
+    },
+    {
+     "ids": [
+      "earbud_weight",
+      "case_weight",
+      "total_carry_weight"
+     ],
+     "message": "전체 무게와 구성요소 무게를 동시에 가중하면 무게를 중복 반영해요."
+    }
+   ]
+  },
+  "leisure": {
+   "common": [
+    {
+     "id": "initial_cost",
+     "name": "초기 비용",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "처음에 드는 돈은 얼마인가요? (보증금·가격·첫 달 비용 등)",
+     "search": "{option} 초기 비용"
+    },
+    {
+     "id": "time_required",
+     "name": "소요 시간",
+     "icon": "clock",
+     "default": true,
+     "better": "low",
+     "question": "시간이 얼마나 걸리나요? (이동 시간·주당 시간·돈이 묶이는 기간 등)",
+     "search": "{option} 소요 시간"
+    }
+   ],
+   "main": [
+    {
+     "id": "transport_cost",
+     "name": "왕복 교통비",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "왕복 교통비는 얼마인가요?",
+     "search": "{option} 왕복 교통비",
+     "help": "전주와 부산은 KTX 일반실 왕복, 제주는 김포 출발 항공 왕복 평균이에요."
+    },
+    {
+     "id": "lodging_cost",
+     "name": "숙박비(2박)",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "숙박비(2박)은 얼마인가요?",
+     "search": "{option} 숙박비",
+     "help": "1인 기준 중급 숙소 2박 합계예요. 숙소 종류와 날짜에 따라 달라요."
+    },
+    {
+     "id": "meal_price",
+     "name": "대표 음식 1인분",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "대표 음식 1인분은 얼마인가요?",
+     "search": "{option} 대표 음식 1인분",
+     "help": "전주 비빔밥, 부산 돼지국밥, 제주 고기국수 가격이에요. 식당에 따라 달라요."
+    },
+    {
+     "id": "local_transport_cost",
+     "name": "현지 이동비",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "현지 이동비는 얼마인가요?",
+     "search": "{option} 현지 이동비",
+     "help": "전주와 부산은 대중교통과 택시, 제주는 렌터카 2일 비용으로 잡았어요."
+    },
+    {
+     "id": "weather_free",
+     "name": "날씨와 무관",
+     "icon": "sun",
+     "default": true,
+     "better": "high",
+     "question": "날씨와 무관이 되나요?",
+     "search": "{option} 날씨와 무관",
+     "help": "비나 더위, 추위와 상관없이 즐길 수 있는지 봐요."
+    },
+    {
+     "id": "conversation",
+     "name": "대화 가능",
+     "icon": "users",
+     "default": true,
+     "better": "high",
+     "question": "대화 가능이 되나요?",
+     "search": "{option} 대화 가능",
+     "help": "활동하는 동안 함께한 사람과 자유롭게 이야기할 수 있는지 봐요."
+    },
+    {
+     "id": "reservation_needed",
+     "name": "사전 예매",
+     "icon": "doc",
+     "default": false,
+     "better": "low",
+     "question": "사전 예매가 되나요?",
+     "search": "{option} 사전 예매",
+     "help": "주말 인기 시간대에 미리 예매해야 하는지 봐요. 필요하지 않을수록 편하다고 단순하게 봤어요."
+    },
+    {
+     "id": "outdoor_time",
+     "name": "야외 활동 시간",
+     "icon": "clock",
+     "default": true,
+     "better": "high",
+     "question": "야외 활동 시간은 어느 정도인가요?",
+     "search": "{option} 야외 활동 시간",
+     "help": "이동 시간을 포함해 바깥에서 보내는 시간이에요. 많을수록 좋다고 단순하게 본 기준이에요."
+    },
+    {
+     "id": "transit_only",
+     "name": "대중교통 이동",
+     "icon": "bus",
+     "default": true,
+     "better": "high",
+     "question": "대중교통 이동이 되나요?",
+     "search": "{option} 대중교통 이동",
+     "help": "렌터카 없이 대중교통만으로 주요 관광지를 다닐 수 있는지 봐요. 제주는 렌터카를 권하는 경우가 많아요."
+    }
+   ],
+   "more": [
+    {
+     "id": "oct_temperature",
+     "name": "10월 평균 기온",
+     "icon": "sun",
+     "default": false,
+     "better": "high",
+     "question": "10월 평균 기온은 어느 정도인가요?",
+     "search": "{option} 10월 평균 기온",
+     "help": "기온이 높을수록 10월 야외 일정에 유리하다고 단순하게 본 기준이에요. 취향에 따라 달라요."
+    },
+    {
+     "id": "prep_items",
+     "name": "챙길 준비물",
+     "icon": "doc",
+     "default": false,
+     "better": "low",
+     "question": "챙길 준비물은 어느 정도인가요?",
+     "search": "{option} 챙길 준비물",
+     "help": "미리 챙겨 가야 하는 물건 수예요. 피크닉은 돗자리, 간식, 음료, 쓰레기봉투예요."
+    }
+   ],
+   "overlap": [
+    {
+     "ids": [
+      "initial_cost",
+      "transport_cost",
+      "lodging_cost",
+      "meal_price",
+      "local_transport_cost"
+     ],
+     "message": "총 여행 비용에는 교통비, 숙박비, 식비, 현지 이동비가 이미 들어 있어요. 함께 고르면 비용이 중복해서 반영돼요."
+    },
+    {
+     "ids": [
+      "weather_free",
+      "outdoor_time"
+     ],
+     "message": "날씨와 무관한지와 야외 활동 시간은 서로 반대로 움직여요. 함께 고르면 한쪽이 다른 쪽을 상쇄해요."
+    }
+   ]
+  },
+  "finance": {
+   "common": [
+    {
+     "id": "initial_cost",
+     "name": "초기 비용",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "처음에 드는 돈은 얼마인가요? (보증금·가격·첫 달 비용 등)",
+     "search": "{option} 초기 비용"
+    },
+    {
+     "id": "time_required",
+     "name": "소요 시간",
+     "icon": "clock",
+     "default": true,
+     "better": "low",
+     "question": "시간이 얼마나 걸리나요? (이동 시간·주당 시간·돈이 묶이는 기간 등)",
+     "search": "{option} 소요 시간"
+    }
+   ],
+   "main": [
+    {
+     "id": "interest_rate",
+     "name": "표시 금리",
+     "icon": "chart",
+     "default": false,
+     "better": "high",
+     "question": "표시 금리는 어느 정도인가요?",
+     "search": "{option} 표시 금리",
+     "help": "12개월 기본금리를 단순화한 값이에요. 은행과 우대조건에 따라 달라요."
+    },
+    {
+     "id": "total_interest",
+     "name": "만기 이자(세전)",
+     "icon": "wallet",
+     "default": true,
+     "better": "high",
+     "question": "만기 이자(세전)은 얼마인가요?",
+     "search": "{option} 만기 이자",
+     "help": "총 600만원을 낼 때 12개월 뒤 받는 세전 이자예요. 적금은 월 50만원 단리 계산이에요."
+    },
+    {
+     "id": "auto_saving",
+     "name": "매달 자동 납입",
+     "icon": "refresh",
+     "default": true,
+     "better": "high",
+     "question": "매달 자동 납입이 되나요?",
+     "search": "{option} 매달 자동 납입",
+     "help": "매달 자동이체로 저축 습관을 만들 수 있는 구조인지 봐요."
+    },
+    {
+     "id": "early_withdrawal_rate",
+     "name": "중도해지 금리",
+     "icon": "chart",
+     "default": true,
+     "better": "high",
+     "question": "중도해지 금리는 어느 정도인가요?",
+     "search": "{option} 중도해지 금리",
+     "help": "만기 전에 해지하면 적용되는 금리예요. 상품마다 달라서 일반적인 수준으로 잡았어요."
+    }
+   ],
+   "more": [
+    {
+     "id": "after_tax_interest",
+     "name": "만기 이자(세후)",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "만기 이자(세후)는 얼마인가요?",
+     "search": "{option} 만기 이자",
+     "help": "세전 이자에서 이자소득세 15.4%를 뺀 금액이에요."
+    },
+    {
+     "id": "return_on_principal",
+     "name": "납입금 대비 이자율",
+     "icon": "wallet",
+     "default": false,
+     "better": "high",
+     "question": "납입금 대비 이자율은 어느 정도인가요?",
+     "search": "{option} 납입금 대비 이자율",
+     "help": "총 납입 원금 대비 세전 이자 비율이에요. 적금은 돈이 늦게 들어가서 표시 금리보다 낮아요."
+    },
+    {
+     "id": "min_deposit",
+     "name": "최소 가입 금액",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "최소 가입 금액은 얼마인가요?",
+     "search": "{option} 최소 가입 금액",
+     "help": "가입에 필요한 최소 금액이에요. 은행마다 달라서 일반적인 수준으로 잡았어요."
+    },
+    {
+     "id": "protection_limit",
+     "name": "예금자보호 한도",
+     "icon": "shield",
+     "default": false,
+     "better": "high",
+     "question": "예금자보호 한도는 얼마인가요?",
+     "search": "{option} 예금자보호 한도",
+     "help": "한 금융기관당 1인 보호 한도예요. 예금과 적금이 같아요."
+    }
+   ],
+   "overlap": [
+    {
+     "ids": [
+      "total_interest",
+      "after_tax_interest",
+      "return_on_principal"
+     ],
+     "message": "세전 이자, 세후 이자, 납입금 대비 이자율은 같은 이자에서 나온 값이에요. 함께 고르면 이자가 중복해서 반영돼요."
+    },
+    {
+     "ids": [
+      "initial_cost",
+      "time_required"
+     ],
+     "message": "처음 필요한 돈과 돈이 묶이는 기간은 목돈 없이 시작할 수 있는지와 함께 움직여요. 둘 다 고르면 같은 방향으로 크게 반영돼요."
+    }
+   ]
+  },
+  "selfdev": {
+   "common": [
+    {
+     "id": "initial_cost",
+     "name": "초기 비용",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "처음에 드는 돈은 얼마인가요? (보증금·가격·첫 달 비용 등)",
+     "search": "{option} 초기 비용"
+    },
+    {
+     "id": "time_required",
+     "name": "소요 시간",
+     "icon": "clock",
+     "default": true,
+     "better": "low",
+     "question": "시간이 얼마나 걸리나요? (이동 시간·주당 시간·돈이 묶이는 기간 등)",
+     "search": "{option} 소요 시간"
+    }
+   ],
+   "main": [
+    {
+     "id": "calorie_per_hour",
+     "name": "1시간 소모 열량",
+     "icon": "heart",
+     "default": true,
+     "better": "high",
+     "question": "1시간 소모 열량은 어느 정도인가요?",
+     "search": "{option} 1시간 소모 열량",
+     "help": "체중 70kg 기준으로 신체활동 강도(MET)에 70을 곱해 계산했어요. 테니스는 복식 6.0, 웨이트는 일반 3.5를 썼어요."
+    },
+    {
+     "id": "group_size",
+     "name": "함께 운동하는 사람",
+     "icon": "users",
+     "default": true,
+     "better": "high",
+     "question": "함께 운동하는 사람은 어느 정도인가요?",
+     "search": "{option} 함께 운동하는 사람",
+     "help": "본인을 포함해 같이 운동하는 인원이에요. 사람이 많을수록 꾸준히 하기 쉽다고 단순하게 본 기준이에요."
+    },
+    {
+     "id": "one_to_one",
+     "name": "1:1 코칭",
+     "icon": "users",
+     "default": false,
+     "better": "high",
+     "question": "1:1 코칭이 되나요?",
+     "search": "{option} 1:1 코칭",
+     "help": "수업 중에 한 명의 코치가 나만 봐 주는지 여부예요. 테니스는 그룹 레슨 기준이에요."
+    },
+    {
+     "id": "weather_free",
+     "name": "날씨와 무관",
+     "icon": "sun",
+     "default": true,
+     "better": "high",
+     "question": "날씨와 무관이 되나요?",
+     "search": "{option} 날씨와 무관",
+     "help": "비나 더위, 추위와 상관없이 운동할 수 있는지 봐요. 테니스는 실외 코트 기준이에요."
+    }
+   ],
+   "more": [
+    {
+     "id": "monthly_cost",
+     "name": "월 비용",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "월 비용은 얼마인가요?",
+     "search": "{option} 월 비용",
+     "help": "주 2회(월 8회) 기준 월 비용이에요. 테니스는 그룹 레슨, 헬스는 PT 8회와 회원권을 더했어요."
+    },
+    {
+     "id": "equipment_cost",
+     "name": "장비 구입비",
+     "icon": "wallet",
+     "default": false,
+     "better": "low",
+     "question": "장비 구입비는 얼마인가요?",
+     "search": "{option} 장비 구입비",
+     "help": "시작할 때 한 번 드는 장비 비용이에요. 테니스는 라켓과 신발, 헬스는 신발과 운동복이에요."
+    },
+    {
+     "id": "session_minutes",
+     "name": "1회 수업 시간",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "1회 수업 시간은 어느 정도인가요?",
+     "search": "{option} 1회 수업 시간",
+     "help": "수업 한 번의 길이예요. 업체마다 달라요."
+    },
+    {
+     "id": "sessions_per_month",
+     "name": "월 수업 횟수",
+     "icon": "clock",
+     "default": false,
+     "better": "high",
+     "question": "월 수업 횟수는 어느 정도인가요?",
+     "search": "{option} 월 수업 횟수",
+     "help": "주 2회로 맞춘 월 수업 횟수예요. 두 선택지가 같아요."
+    }
+   ],
+   "overlap": [
+    {
+     "ids": [
+      "initial_cost",
+      "monthly_cost",
+      "equipment_cost"
+     ],
+     "message": "첫 달 비용에는 월 비용과 장비 구입비가 이미 들어 있어요. 함께 고르면 비용이 중복해서 반영돼요."
+    }
+   ]
+  },
+  "etc": {
+   "common": [
+    {
+     "id": "initial_cost",
+     "name": "초기 비용",
+     "icon": "wallet",
+     "default": true,
+     "better": "low",
+     "question": "처음에 드는 돈은 얼마인가요? (보증금·가격·첫 달 비용 등)",
+     "search": "{option} 초기 비용"
+    },
+    {
+     "id": "time_required",
+     "name": "소요 시간",
+     "icon": "clock",
+     "default": true,
+     "better": "low",
+     "question": "시간이 얼마나 걸리나요? (이동 시간·주당 시간·돈이 묶이는 기간 등)",
+     "search": "{option} 소요 시간"
+    }
+   ],
+   "main": [
+    {
+     "id": "risk",
+     "name": "위험·불확실성",
+     "icon": "alert",
+     "default": true,
+     "question": "잘못될 수 있는 점은 무엇인가요?",
+     "search": "{option} 단점"
+    },
+    {
+     "id": "longterm",
+     "name": "장기적 영향",
+     "icon": "chart",
+     "default": true,
+     "question": "1년 뒤의 나에게 어떤 영향을 줄까요?",
+     "search": "{option} 장단점"
+    },
+    {
+     "id": "satisfaction",
+     "name": "만족도",
+     "icon": "smile",
+     "default": false,
+     "question": "고른 뒤 얼마나 만족할 것 같나요?",
+     "search": "{option} 후기"
+    },
+    {
+     "id": "effort",
+     "name": "노력·수고",
+     "icon": "tool",
+     "default": false,
+     "question": "준비하거나 신경 쓸 일이 많나요?",
+     "search": "{option} 준비"
+    },
+    {
+     "id": "people",
+     "name": "주변 사람 영향",
+     "icon": "users",
+     "default": false,
+     "question": "가족, 친구, 동료에게 어떤 영향이 있나요?",
+     "search": "{option} 경험담"
+    }
+   ],
+   "more": [
+    {
+     "id": "fun",
+     "name": "재미·흥미",
+     "icon": "spark",
+     "question": "하면서 즐거울 것 같나요?",
+     "search": "{option} 재미"
+    },
+    {
+     "id": "reversible",
+     "name": "되돌릴 수 있는지",
+     "icon": "refresh",
+     "question": "마음이 바뀌면 되돌릴 수 있나요?",
+     "search": "{option} 취소 환불"
+    },
+    {
+     "id": "learning",
+     "name": "배울 점",
+     "icon": "book",
+     "question": "새로 배우거나 얻는 경험이 있나요?",
+     "search": "{option} 경험"
+    },
+    {
+     "id": "health",
+     "name": "건강",
+     "icon": "heart",
+     "question": "몸과 마음 건강에 어떤 영향이 있나요?",
+     "search": "{option} 건강"
+    }
+   ],
+   "overlap": []
   }
+ }
 };
