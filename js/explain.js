@@ -55,7 +55,14 @@
     var gapRaw = win.total - lose.total;
     var gap = Math.round(gapRaw);
 
+    // 1위와 점수가 같은 선택지 모두 (선택지가 3~4개여도 빠짐없이)
+    var tiedNames = result.ranking.filter(function (o) { return Math.abs(o.total - win.total) < 0.5; }).map(function (o) { return o.name; });
+    var tiedText = tiedNames.length <= 2
+      ? Pickwise.josa(tiedNames[0], '과와') + ' ' + (tiedNames[1] || '')
+      : tiedNames.slice(0, -1).join(', ') + ', ' + tiedNames[tiedNames.length - 1];
+
     var vars = {
+      tied: tiedText, same: tiedNames.length >= 3 ? '모두 같아요' : '같아요',
       winner: win.name, loser: lose.name, score1: win.score, score2: lose.score, gap: gap,
       c1: ahead[0] ? ahead[0].name : '', c2: ahead[1] ? ahead[1].name : '',
       w: (ahead[0] ? result.shares[ahead[0].id] : 0) + (ahead[1] ? result.shares[ahead[1].id] : 0),
