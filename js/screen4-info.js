@@ -33,15 +33,30 @@
   function starsToScore(n) { return (n - 1) * 25; }
   function scoreToStars(v) { return Math.round(v / 25) + 1; }
 
-  /* 한 기준에 대한 제안: { score: 0~100 또는 null, word: 근거 단어 } */
-  function suggest(text, criterion) {
+  function keysOf(criterion) {
+    var K = Pickwise.data.keywords, KD = Pickwise.data.keywordsDataset || {};
+    if (criterion.custom) return { aliases: [criterion.name].concat(criterion.name.split(/\s+/)), pos: [], neg: [] };
+    return KD[criterion.id] || K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
+  }
+  /* 문장 조각 안에서 이 기준을 가리키는 말 중 가장 긴 것의 길이 (없으면 0) */
+  function aliasLen(p, k) {
+    return (k.aliases || []).reduce(function (m, a) { return p.indexOf(a) > -1 && a.length > m ? a.length : m; }, 0);
+  }
+
+  /* 한 기준에 대한 제안: { score: 0~100 또는 null, word: 근거 단어 }
+     peers: 함께 비교 중인 기준들. 한 조각이 여러 기준을 가리키면 가장 구체적인(긴) 이름의 기준만 그 조각을 센다
+     예) "야외 활동 시간이 길어요" → '야외 활동 시간'(7자)이 '시간'(2자, 소요 시간)보다 구체적이므로 야외 활동 시간만 반영 */
+  function suggest(text, criterion, peers) {
     var K = Pickwise.data.keywords;
-    var KD = Pickwise.data.keywordsDataset || {};
-    var k = KD[criterion.id] || K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
-    if (criterion.custom) k = { aliases: [criterion.name].concat(criterion.name.split(/\s+/)), pos: [], neg: [] };
+    var k = keysOf(criterion);
     var delta = 0, words = [];
     clauses(text).forEach(function (p) {
       if (k.needsAlias && !find(p, k.aliases)) return;   // 데이터셋 기준: 그 기준을 가리키는 말이 있는 조각만
+      if (k.needsAlias && peers) {
+        var mine = aliasLen(p, k);
+        var beaten = peers.some(function (o) { return o.id !== criterion.id && aliasLen(p, keysOf(o)) > mine; });
+        if (beaten) return;
+      }
       var s = 0, word = find(p, k.neg);
       if (word) s = -1;
       else if ((word = find(p, k.pos))) s = 1;
@@ -85,7 +100,7 @@
     var text = state.info[opt] || '';
     var hits = {};
     state.criteria.forEach(function (c) {
-      var r = suggest(text, c);
+      var r = suggest(text, c, state.criteria);
       hits[c.id] = r.word;
       if (!state.manual[opt][c.id]) state.ratings[opt][c.id] = r.score;
     });
