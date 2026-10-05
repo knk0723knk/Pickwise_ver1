@@ -107,3 +107,5 @@
 .s5-sources { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
 .s5-sources a { color: var(--accent-strong); font-weight: 600; }
 .s5-sources small { color: var(--muted); }
+
+.s5-fact i { font-style: normal; color: var(--accent-strong); font-weight: 600; }

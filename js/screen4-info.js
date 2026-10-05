@@ -175,8 +175,11 @@
         var v = r[c.id], known = typeof v === 'number';
         var tag, f = facts[c.id];
         var stars1 = known ? scoreToStars(v) : 0;
-        if (f && f.text && !f.edited && known) {
-          tag = '<span class="s4-src fact">자료 · ' + esc(f.text) + '</span>' + (f.estimated ? '<span class="s4-est" title="추정값이에요. 실제 값과 다를 수 있어요.">추정</span>' : '');
+        if (f && f.text) {
+          // 자료 수치(예: 35.5만원)는 점수를 고쳐도 사실이므로 항상 보여준다
+          tag = '<span class="s4-src fact">자료 · ' + esc(f.text) + '</span>' +
+            (f.estimated ? '<span class="s4-est" title="추정값이에요. 실제 값과 다를 수 있어요.">추정</span>' : '') +
+            (f.edited ? '<span class="s4-src manual">' + (known ? '점수 직접 고침' : '모름') + '</span>' : '');
         } else if (m[c.id]) tag = known ? '<span class="s4-src manual">직접 고름</span>' : '<span class="s4-src unknown">모름</span>';
         else tag = known ? '<span class="s4-src auto">자동 · "' + esc(hits[opt][c.id]) + '"</span>' : '<span class="s4-src unknown">정보 없음</span>';
         var stars = '';

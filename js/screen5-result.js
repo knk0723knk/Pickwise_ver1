@@ -54,13 +54,13 @@
         var p = o.per[c.id];
         var unknown = p.rating === null;
         var f = state.facts && state.facts[o.name] && state.facts[o.name][c.id];
-        var fact = f && f.text && !f.edited ? f : null;
+        var fact = f && f.text ? f : null;
         var label = unknown ? '모름(50점으로 계산)' : (fact ? fact.text + ' · ' : '') + Math.round(p.rating) + '점';
         return '<div class="s5-bar-row" title="' + esc(o.name + ' · ' + c.name + ' ' + label) + '">' +
           '<span class="s5-bar-name">' + esc(o.name) + '</span>' +
           '<span class="s5-track"><span class="s5-bar' + (unknown ? ' unknown' : '') + '" style="width:' + p.used + '%;--c:' + color(o.name) + '"></span></span>' +
           '<span class="s5-bar-val">' + (unknown ? '모름' : Math.round(p.rating) + '점') + '</span>' +
-          (fact ? '<span class="s5-fact">' + esc(fact.text) + (fact.estimated ? ' <em>추정</em>' : '') + '</span>' : '') +
+          (fact ? '<span class="s5-fact">' + esc(fact.text) + (fact.estimated ? ' <em>추정</em>' : '') + (fact.edited ? ' <i>· 점수 직접 고침</i>' : '') + '</span>' : '') +
         '</div>';
       }).join('');
       return '<div class="s5-crit">' +
