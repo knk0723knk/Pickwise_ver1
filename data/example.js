@@ -1,20 +1,20 @@
 /* "예시로 체험하기" 데이터 (담당: 조원2)
    - 화면 1의 예시 버튼을 누르면 이 내용이 Pickwise.state 에 채워진다.
-   - 초기 비용·소요 시간은 데이터셋 공통 기준, 날씨·볼거리·음식은 설명글 점수용 기준(data/keywords.js)
+   - 총 여행 비용·이동 시간은 데이터셋 "국내 여행지 선택"의 공통 기준(주제가 여행이라 이 시나리오와 연결됨), 날씨·볼거리·음식은 설명글 점수용 기준(data/keywords.js)
    - 설명 문장은 일반적으로 알려진 내용만 적는다.
    - 데이터팀 체험 시나리오(data/samples.js)와 달리, 이 예시는 "설명글을 쓰면 점수가 자동으로 나오는" 기능을 보여주는 용도다.
    - 중요도는 0~100 */
 Pickwise.data.example = {
   "topic": "그리스 vs 이집트, 이번 여름휴가 어디로 갈까?",
   "category": "leisure",
-  "criteriaFor": "leisure",
+  "criteriaFor": "",
   "options": ["그리스", "이집트"],
   "criteria": [
-    { "id": "initial_cost", "name": "초기 비용", "icon": "wallet", "custom": false },
+    { "id": "initial_cost", "name": "총 여행 비용", "icon": "wallet", "custom": false },
     { "id": "weather",   "name": "날씨",        "icon": "sun",      "custom": false },
     { "id": "sights",    "name": "볼거리·즐길거리", "icon": "camera",   "custom": false },
     { "id": "food",      "name": "음식",        "icon": "utensils", "custom": false },
-    { "id": "time_required", "name": "소요 시간", "icon": "clock", "custom": false }
+    { "id": "time_required", "name": "이동 시간", "icon": "clock", "custom": false }
   ],
   "weights": { "initial_cost": 100, "weather": 80, "sights": 70, "food": 50, "time_required": 30 },
   "info": {

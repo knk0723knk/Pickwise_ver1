@@ -23,11 +23,34 @@
       var common = by("common"), own = by("main");
       return { common: common, own: own, main: common.concat(own), more: by("more"), overlap: sm.overlap || [] };
     }
-    // 직접 입력: 데이터셋 기준 (공통 기준은 분류마다 다름 — 사용 기간 / 소요 시간)
+    // 직접 입력: 주제에 가장 가까운 데이터셋 시나리오의 기준 (결정 B). 맞는 시나리오가 없으면 분류 단위 기준
     var all = Pickwise.data.criteria;
-    var cat = all.categories[state.category] || all.categories.etc;
+    var sc = matchScenario(state);
+    var src = sc ? all.scenarios[sc] : (all.categories[state.category] || all.categories.etc);
     var plain = function (list) { return list.map(function (c) { return { id: c.id, name: c.name, icon: c.icon, default: c.default }; }); };
-    return { common: plain(cat.common), own: plain(cat.main), main: plain(cat.common.concat(cat.main)), more: plain(cat.more), overlap: cat.overlap || [] };
+    return { common: plain(src.common), own: plain(src.main), main: plain(src.common.concat(src.main)), more: plain(src.more),
+             overlap: src.overlap || [], scenario: sc ? all.scenarios[sc].title : '' };
+  }
+
+  /* 주제(+선택지 이름)에 hints 단어가 가장 많이 들어 있는 같은 분류의 시나리오 id. 하나도 없으면 '' */
+  function matchScenario(state) {
+    var all = Pickwise.data.criteria.scenarios || {};
+    var text = (state.topic + ' ' + state.options.join(' ')).toLowerCase();
+    var best = '', bestN = 0;
+    Object.keys(all).forEach(function (id) {
+      var sc = all[id];
+      if (sc.category !== state.category) return;
+      var n = sc.hints.filter(function (w) { return text.indexOf(w.toLowerCase()) > -1; }).length;
+      if (n > bestN) { best = id; bestN = n; }
+    });
+    return best;
+  }
+  Pickwise.matchScenario = matchScenario;
+
+  /* 지금 기준 목록이 무엇을 바탕으로 골라졌는지 (바뀌면 추천을 새로 채움) */
+  function selectionKey(state) {
+    if (state.preset) return 'preset:' + state.preset.id;
+    return state.category + '|' + matchScenario(state);
   }
   function catName(state) {
     var c = Pickwise.data.topics.categories.filter(function (x) { return x.id === state.category; })[0];
@@ -35,19 +58,20 @@
   }
   function pick(c) { return { id: c.id, name: c.name, icon: c.icon, custom: !!c.custom }; }
 
-  /* 처음 들어왔거나 주제(분류)가 바뀌었으면 추천 기본값으로 채운다
-     state.criteriaFor = 지금 기준 목록을 어떤 분류로 골랐는지 (새 결정·예시를 불러오면 함께 바뀜) */
+  /* 처음 들어왔거나 주제가 다른 분류·시나리오로 바뀌었으면 추천 기본값으로 채운다
+     state.criteriaFor = 지금 기준 목록을 무엇으로 골랐는지 (selectionKey 값) */
   function ensureSelection(state) {
+    var key = selectionKey(state);
     var defaults = function () { return catData(state).main.filter(function (c) { return c.default; }).map(pick); };
     if (!state.criteria.length) {
       state.criteria = defaults();
-      state.criteriaFor = state.category;
+      state.criteriaFor = key;
       return false;
     }
-    if (!state.criteriaFor) { state.criteriaFor = state.category; return false; }
-    if (state.criteriaFor !== state.category) {
+    if (!state.criteriaFor) { state.criteriaFor = key; return false; }   // 설명글 예시처럼 기준이 이미 채워진 경우
+    if (state.criteriaFor !== key) {
       state.criteria = defaults();
-      state.criteriaFor = state.category;
+      state.criteriaFor = key;
       return true;
     }
     return false;
@@ -61,7 +85,9 @@
     el.innerHTML =
       '<div class="s2-head">' +
         '<h2>어떤 기준으로 비교할까요?</h2>' +
-        '<p><span class="chip">' + esc(catName(state)) + '</span> 고민에 자주 쓰는 기준을 골라 두었어요. 더 고르거나 직접 추가해 보세요.</p>' +
+        '<p><span class="chip">' + esc(catName(state)) + '</span> ' +
+          (data.scenario ? '데이터셋의 <strong>' + esc(data.scenario) + '</strong> 기준을 골라 두었어요.' : '고민에 자주 쓰는 기준을 골라 두었어요.') +
+          ' 더 고르거나 직접 추가해 보세요.</p>' +
       '</div>' +
       '<div class="s2-count" data-s2="count" aria-live="polite"></div>' +
       '<div class="s2-cards" data-s2="cards">' +

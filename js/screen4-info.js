@@ -62,11 +62,12 @@
 
   /* 기준 정보(질문·검색어) 찾기 */
   function meta(c) {
-    var cats = Pickwise.data.criteria.categories, found = null;
-    var order = [Pickwise.state.category].concat(Object.keys(cats));   // 지금 분류의 질문을 먼저
-    order.some(function (cat) {
-      if (found || !cats[cat]) return !!found;
-      found = cats[cat].common.concat(cats[cat].main, cats[cat].more).filter(function (x) { return x.id === c.id; })[0];
+    var all = Pickwise.data.criteria, cats = all.categories, found = null;
+    var sc = Pickwise.matchScenario ? Pickwise.matchScenario(Pickwise.state) : '';
+    var pools = (sc ? [all.scenarios[sc]] : []).concat([cats[Pickwise.state.category]], Object.keys(cats).map(function (k) { return cats[k]; }));
+    pools.some(function (p) {   // 맞는 시나리오 → 지금 분류 → 나머지 분류 순서로 질문을 찾는다
+      if (!p) return false;
+      found = p.common.concat(p.main, p.more).filter(function (x) { return x.id === c.id; })[0] || null;
       return !!found;
     });
     if (!found && Pickwise.state.preset) {   // 데이터팀 예시 기준이면 그 설명을 질문으로

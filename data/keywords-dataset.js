@@ -1292,5 +1292,82 @@ Pickwise.data.keywordsDataset = {
    "느리"
   ],
   "needsAlias": true
+ },
+ "scenario_monthly_personal_rent": {
+  "aliases": [
+   "월 임대료",
+   "임대료"
+  ],
+  "pos": [
+   "저렴",
+   "싸게",
+   "가성비",
+   "합리적",
+   "할인",
+   "적게 들",
+   "부담이 적",
+   "무료"
+  ],
+  "neg": [
+   "비싸",
+   "비싼",
+   "부담",
+   "많이 들",
+   "고가"
+  ],
+  "needsAlias": true
+ },
+ "personal_deposit_ratio": {
+  "aliases": [
+   "보증금 비율",
+   "비율"
+  ],
+  "pos": [
+   "낮",
+   "저렴"
+  ],
+  "neg": [
+   "높",
+   "비싸"
+  ],
+  "needsAlias": true
+ },
+ "scenario_first_term_personal_rent": {
+  "aliases": [
+   "총 임대료",
+   "임대료"
+  ],
+  "pos": [
+   "저렴",
+   "싸게",
+   "가성비",
+   "합리적",
+   "할인",
+   "적게 들",
+   "부담이 적",
+   "무료"
+  ],
+  "neg": [
+   "비싸",
+   "비싼",
+   "부담",
+   "많이 들",
+   "고가"
+  ],
+  "needsAlias": true
+ },
+ "earbud_weight": {
+  "aliases": [
+   "무게"
+  ],
+  "pos": [
+   "가볍",
+   "가벼"
+  ],
+  "neg": [
+   "무겁",
+   "무거"
+  ],
+  "needsAlias": true
  }
 };

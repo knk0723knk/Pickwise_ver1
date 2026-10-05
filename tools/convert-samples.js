@@ -204,6 +204,36 @@ categories.etc = {
   overlap: []
 };
 
+/* ---------- 3) 시나리오별 기준 (직접 입력 시 주제에 가장 가까운 시나리오의 기준을 씀) ----------
+   hints: 주제 문장에 이 단어가 많이 들어 있으면 이 시나리오로 본다. 데이터팀이 시나리오를 추가하면 여기에 단어도 추가 */
+const SCENARIO_HINTS = {
+  housing_region:   ['청년전세임대', '전세임대', '지역', '수도권', '광역시', '서울', '경기', '지방', '이사', '자취', '원룸', '오피스텔', '투룸', '전세', '월세', '집'],
+  housing_sharing:  ['공동거주', '셰어', '셰어하우스', '룸메이트', '동거', '같이 살', '혼자 살', '단독', '2인', '3인', '친구랑'],
+  laptop_purchase:  ['노트북', '맥북', '그램', '갤럭시북', '랩탑', '컴퓨터', '맥', '아이패드', '태블릿'],
+  earbuds_purchase: ['이어폰', '버즈', '에어팟', '헤드폰', '헤드셋', '블루투스', '무선 이어폰'],
+  travel_domestic:  ['여행', '여행지', '국내', '휴가', '제주', '부산', '전주', '강릉', '경주', '여수', '속초', '숙소', '해외'],
+  weekend_activity: ['주말', '영화', '피크닉', '한강', '데이트', '전시', '전시회', '공연', '산책', '등산', '놀이공원', '카페', '뭐 하지', '뭐 할까'],
+  savings_choice:   ['적금', '예금', '저축', '통장', '파킹', '이자', '금리', '청약'],
+  exercise_choice:  ['운동', '헬스', 'pt', '필라테스', '테니스', '요가', '수영', '러닝', '클라이밍', '골프', '크로스핏', '복싱']
+};
+const scenarios = {};
+d.decisions.forEach(x => {
+  const app = catOf[x.id] || 'etc';
+  const byOrder = x.criteria.slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+  const item = c => ({ id: c.id, name: c.label, icon: iconOf(c.id), default: !!c.selected, better: c.direction === 'lower_better' ? 'low' : 'high',
+    question: COMMON[c.id] && c.scope === 'common' ? questionFor(c) : questionFor(c), search: '{option} ' + c.label.replace(/\(.*?\)/g, '').trim() });
+  const common = byOrder.filter(c => c.scope === 'common').map(item);
+  const main = byOrder.filter(c => c.scope !== 'common' && (c.display_group !== 'additional' || c.selected)).map(item);
+  const more = byOrder.filter(c => c.scope !== 'common' && c.display_group === 'additional' && !c.selected).map(item);
+  byOrder.forEach(c => { if (!keywords[c.id]) keywords[c.id] = keywordsFor(c.id, c, c.direction === 'lower_better' ? 'low' : 'high'); });
+  scenarios[x.id] = {
+    title: x.title, category: app, hints: SCENARIO_HINTS[x.id] || x.title.split(/\s+/),
+    common, main, more,
+    overlap: (x.criteria_overlap_warnings || []).map(o => ({ ids: o.criterion_ids, message: o.message })),
+    next: (x.next_decision_suggestions || []).map(n => n.title)
+  };
+});
+
 /* ---------- 쓰기 ---------- */
 const stamp = `원본: 데이터팀 PICKWISE_dataset v${VERSION} (기준일 ${REF}) · tools/convert-samples.js 로 자동 생성 — 직접 고치지 말고 원본 수정 후 다시 변환`;
 fs.writeFileSync(path.join(outDir, 'samples.js'),
@@ -218,12 +248,14 @@ Pickwise.data.datasetNext = ${JSON.stringify(nextByCat, null, 1)};
 fs.writeFileSync(path.join(outDir, 'criteria.js'),
 `/* 분류별 비교 기준 — 직접 입력에도 쓰는 데이터셋 기준 (담당: 데이터팀 · 정리: 조원3)
    ${stamp}
+   - scenarios.시나리오: 직접 입력한 주제가 hints 단어와 가장 많이 맞는 시나리오의 기준을 그대로 쓴다 (10/05 결정 B)
+   - categories: 맞는 시나리오가 없을 때 쓰는 분류 단위 기준 (같은 분류 시나리오 기준을 합친 것)
    - categories.분류.common: 공통 기준 (데이터셋: 초기 비용 + 사용 기간[주거·소비] / 소요 시간[여가·자기계발·금융생활])
    - categories.분류.main: 카드로 보이는 기준 (데이터셋 primary) · default: true = 데이터셋에서 기본 선택
    - categories.분류.more: "이런 기준도 고려해보세요" (데이터셋 additional)
    - better: low = 낮을수록 좋음 / high = 높을수록 좋음
    - 기타(etc)는 데이터셋에 시나리오가 없어 공통 기준 + Claude 임시안 */
-Pickwise.data.criteria = ${JSON.stringify({ categories }, null, 1)};
+Pickwise.data.criteria = ${JSON.stringify({ scenarios, categories }, null, 1)};
 `);
 fs.writeFileSync(path.join(outDir, 'keywords-dataset.js'),
 `/* 데이터셋 기준의 점수 단어 (담당: 조원5)

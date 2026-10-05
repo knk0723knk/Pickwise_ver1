@@ -61,7 +61,7 @@
     if (!s) return false;
     var selected = s.criteria.filter(function (c) { return c.selected; });
     var state = {
-      topic: s.topic, category: s.category, criteriaFor: s.category,
+      topic: s.topic, category: s.category, criteriaFor: 'preset:' + s.id,
       options: s.options.slice(),
       criteria: selected.map(function (c) { return { id: c.id, name: c.name, icon: c.icon, custom: false }; }),
       weights: {}, info: {}, ratings: {}, manual: {}, facts: {},
