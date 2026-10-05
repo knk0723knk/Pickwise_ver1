@@ -18,6 +18,8 @@
   --field: #FFFFFF;
   --danger: #D93A2B;
   --on-accent: #FFFFFF;
+  /* 결과 그래프의 선택지 색 (A·B·C·D 순서 고정, 색약 점검 통과) */
+  --opt1: #E8590C; --opt2: #2F6DB5; --opt3: #1F9A7A; --opt4: #8A5CC7;
   --font: "Pretendard", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
   color-scheme: light;
 }
@@ -26,12 +28,14 @@
     --accent: #FF6B33; --accent-strong: #FF8455; --accent-soft: #3A2219; --accent-line: #5C3424;
     --bg: #151211; --card: #1F1B19; --fg: #F3EEEB; --muted: #A89D97; --line: #342D2A;
     --field: #262120; --danger: #FF6B5E; --on-accent: #FFFFFF; color-scheme: dark;
+    --opt1: #E8641F; --opt2: #5B95DD; --opt3: #2AAA88; --opt4: #9877D8;
   }
 }
 :root[data-theme="dark"] {
   --accent: #FF6B33; --accent-strong: #FF8455; --accent-soft: #3A2219; --accent-line: #5C3424;
   --bg: #151211; --card: #1F1B19; --fg: #F3EEEB; --muted: #A89D97; --line: #342D2A;
   --field: #262120; --danger: #FF6B5E; --on-accent: #FFFFFF; color-scheme: dark;
+    --opt1: #E8641F; --opt2: #5B95DD; --opt3: #2AAA88; --opt4: #9877D8;
 }
 
 * { box-sizing: border-box; }

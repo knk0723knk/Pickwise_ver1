@@ -81,9 +81,14 @@
         return;
       }
       var c = classify(s.topic);
+      var note = c.matched ? '· 입력한 단어로 자동 분류했어요 (규칙 기반)' : '· 일반 기준을 추천해 드릴게요';
+      // "다음 결정 추천"으로 이어진 고민은 분류 단어가 없으면 이전 결정의 분류를 이어받는다
+      if (!c.matched && s.categoryHint) {
+        var hint = Pickwise.data.topics.categories.filter(function (x) { return x.id === s.categoryHint; })[0];
+        if (hint) { c = { id: hint.id, name: hint.name, matched: true }; note = '· 이전 결정과 같은 분류로 이어서 추천해요'; }
+      }
       s.category = c.id;
-      q('detect').innerHTML = '분류 <span class="chip">' + esc(c.name) + '</span>' +
-        '<span class="rule-note">' + (c.matched ? '· 입력한 단어로 자동 분류했어요 (규칙 기반)' : '· 일반 기준을 추천해 드릴게요') + '</span>';
+      q('detect').innerHTML = '분류 <span class="chip">' + esc(c.name) + '</span><span class="rule-note">' + note + '</span>';
     }
 
     function clearErrors() {

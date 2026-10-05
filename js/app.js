@@ -33,7 +33,9 @@ window.Pickwise = (function () {
       info: {},            // { 선택지이름: 설명 }
       ratings: {},         // { 선택지이름: { 기준id: 1~5 또는 null(모름) } }
       manual: {},          // { 선택지이름: { 기준id: true } } 사용자가 직접 고른 별점 (자동 제안이 덮어쓰지 않음)
-      attachments: []      // [{ option, name, size, type }] 파일 이름만
+      attachments: [],     // [{ option, name, size, type }] 파일 이름만
+      decisionId: '',      // 결정 기록 id (결과 화면에서 저장할 때 생김)
+      parentTopic: ''      // "다음 결정 추천"으로 시작했다면 이전 결정의 주제
     };
   }
 
@@ -88,6 +90,7 @@ window.Pickwise = (function () {
       var problem = screen.validate(P.state);
       if (problem) { setMessage(problem); return; }
     }
+    if (screen && screen.onNext) { screen.onNext(P.state); return; }   // 화면이 다음 버튼 동작을 직접 정한 경우
     if (current === TOTAL) { restart(); return; }
     maxReached = Math.max(maxReached, current + 1);
     location.hash = 'step-' + (current + 1);
@@ -97,8 +100,10 @@ window.Pickwise = (function () {
     if (current > 1) history.back();
   }
 
-  function restart() {
+  /* 새 결정 시작. prefill 이 있으면 그 내용(topic, options, parentTopic 등)을 채운 채로 시작 */
+  function restart(prefill) {
     P.state = emptyState();
+    if (prefill) Object.keys(prefill).forEach(function (k) { P.state[k] = prefill[k]; });
     maxReached = 1;
     location.hash = 'step-1';
     if (current === 1) show(1);

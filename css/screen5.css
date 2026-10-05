@@ -1,0 +1,91 @@
+/* 화면 5 · 분석 결과 (담당: 조원6·7) */
+
+.s5-head { display: flex; flex-direction: column; gap: 4px; }
+.s5-head h2 { font-size: 19px; font-weight: 800; letter-spacing: -.03em; margin: 0; text-wrap: balance; }
+.s5-head p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+/* 점수 카드 */
+.s5-scores { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 8px; }
+.s5-score {
+  position: relative; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+  background: var(--card); display: flex; flex-direction: column; gap: 2px; min-width: 0;
+}
+.s5-score.win { border: 2px solid var(--accent); padding: 11px 13px; background: var(--accent-soft); }
+.s5-score-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.s5-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.s5-opt { font-size: 13.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s5-num { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.s5-num strong { font-size: 32px; font-weight: 800; color: var(--fg); letter-spacing: -.03em; margin-right: 2px; }
+.s5-score.win .s5-num strong { color: var(--accent-strong); }
+.s5-badge {
+  margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 3px;
+  background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 2px 8px;
+  font-size: 11.5px; font-weight: 700;
+}
+
+/* 한 줄 요약 */
+.s5-summary {
+  display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 14px;
+  background: var(--fg); color: var(--card);
+}
+.s5-summary svg { flex: none; color: var(--accent); margin-top: 2px; }
+.s5-summary-title { font-size: 12px; font-weight: 700; opacity: .75; margin-bottom: 2px; }
+.s5-summary p { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.5; word-break: keep-all; }
+
+/* 공통 상자 */
+.s5-box { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.s5-box-title { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; }
+.s5-box-title svg { color: var(--accent-strong); }
+.s5-text { margin: 0; font-size: 14px; line-height: 1.55; }
+.s5-ai p:not(.rule-note) { margin: 0; font-size: 14px; line-height: 1.6; }
+.s5-ai .rule-note { margin: 0; }
+
+/* 범례 + 막대 */
+.s5-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); }
+.s5-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.s5-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.s5-crit { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+.s5-crit-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; }
+.s5-crit-head span { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.s5-crit-head svg { color: var(--muted); flex: none; }
+.s5-crit-head small { color: var(--muted); font-weight: 600; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.s5-bar-row { display: grid; grid-template-columns: minmax(0, 4.6em) minmax(0, 1fr) 3.4em; align-items: center; gap: 8px; font-size: 12.5px; }
+.s5-bar-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.s5-track { height: 10px; border-radius: 0 4px 4px 0; background: var(--bg); position: relative; }
+.s5-bar { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--c); min-width: 2px; }
+.s5-bar.unknown {
+  background: repeating-linear-gradient(45deg, var(--c) 0 3px, transparent 3px 7px);
+  box-shadow: inset 0 0 0 1px var(--c); opacity: .55;
+}
+.s5-bar-val { text-align: right; font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* 가장 큰 차이 */
+.s5-diffs { display: flex; flex-wrap: wrap; gap: 6px; }
+.s5-diff {
+  border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--accent-strong);
+  border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: 13px;
+}
+.s5-diff small { font-weight: 600; color: var(--muted); margin-left: 2px; }
+
+/* 확신도 */
+.s5-conf { margin-left: auto; font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 10px; border: 1px solid var(--line); }
+.s5-conf.high { color: var(--fg); background: var(--accent-soft); border-color: var(--accent-line); }
+.s5-conf.mid { color: var(--fg); background: var(--bg); }
+.s5-conf.low { color: var(--danger); border-color: var(--danger); }
+.s5-link {
+  border: 0; background: none; padding: 0; color: var(--accent-strong); font: inherit; font-weight: 700;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+
+/* 민감도 */
+.s5-sens .pill-btn { align-self: flex-start; }
+.s5-sens-panel { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.s5-sl { display: grid; grid-template-columns: minmax(0, 6em) minmax(0, 1fr) 2.6em; align-items: center; gap: 8px; font-size: 13px; }
+.s5-sl label { font-weight: 600; word-break: keep-all; }
+.s5-sl input { width: 100%; min-width: 0; accent-color: var(--accent); }
+.s5-sl output { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.s5-sens-msg { margin: 4px 0 0; font-size: 14px; }
+.s5-sens-msg.changed { color: var(--accent-strong); }
+
+.s5-files { margin: 0; padding-left: 18px; font-size: 13.5px; display: flex; flex-direction: column; gap: 2px; }
+.s5-files b { color: var(--muted); font-weight: 600; margin-right: 4px; }

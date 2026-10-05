@@ -21,5 +21,7 @@ Pickwise.data.example = {
   },
   "ratings": {},
   "manual": {},
-  "attachments": []
+  "attachments": [],
+  "decisionId": "",
+  "parentTopic": ""
 };
