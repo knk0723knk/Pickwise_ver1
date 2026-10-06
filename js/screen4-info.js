@@ -46,6 +46,15 @@
     if (!ex) return k;
     return { aliases: k.aliases.concat(ex.aliases || []), pos: k.pos.concat(ex.pos || []), neg: k.neg.concat(ex.neg || []), needsAlias: k.needsAlias };
   }
+  /* 별점 양 끝 표시 [별 1개 쪽, 별 5개 쪽] (예: 초기 비용 → ["비쌈", "저렴함"]) — data/keywords.js scales · scaleWords */
+  function scaleOf(criterion) {
+    var K = Pickwise.data.keywords, KD = Pickwise.data.keywordsDataset || {};
+    if ((K.scales || {})[criterion.id]) return K.scales[criterion.id];
+    var k = KD[criterion.id], W = K.scaleWords || {};
+    if (k && W[k.neg[0]] && W[k.pos[0]]) return [W[k.neg[0]], W[k.pos[0]]];
+    return ['아쉬움', '좋음'];
+  }
+
   /* 문장 조각 안에서 이 기준을 가리키는 말 중 가장 긴 것의 길이 (없으면 0) */
   function aliasLen(p, k) {
     return (k.aliases || []).reduce(function (m, a) { return p.indexOf(a) > -1 && a.length > m ? a.length : m; }, 0);
@@ -166,10 +175,11 @@
         '<div class="block">' +
           '<div class="block-head"><span class="num">1</span><label for="s4-text">' + esc(opt) + '에 대해 알고 있는 내용</label></div>' +
           '<div class="field s4-text"><textarea id="s4-text" rows="4" maxlength="600" placeholder="예: 날씨가 좋고 경치가 예쁘지만 물가가 비싼 편이에요.">' + esc(s.info[opt] || '') + '</textarea></div>' +
-          '<p class="hint">"비싸다", "가깝다"처럼 좋고 나쁨을 적으면 점수를 골라 드려요 <span class="rule-note">(규칙 기반)</span></p>' +
+          '<p class="hint">"가격이 비싸요", "거리가 가까워요"처럼 <strong>기준 이름</strong>과 좋고 나쁨을 함께 적으면 바로 점수를 골라 드려요 <span class="rule-note">(규칙 기반)</span></p>' +
+          '<p class="s4-note" data-s4="note" role="status" hidden></p>' +
         '</div>' +
         '<div class="block">' +
-          '<div class="block-head"><span class="num">2</span><span class="label">기준별 점수</span><span class="s4-legend">0 아쉬움 · 50 보통 · 100 아주 좋음</span></div>' +
+          '<div class="block-head"><span class="num">2</span><span class="label">기준별 점수</span><span class="s4-legend">별이 많을수록 나에게 유리해요</span></div>' +
           '<div class="s4-rates" data-s4="rates"></div>' +
         '</div>' +
         '<div class="block">' +
@@ -220,14 +230,42 @@
             '<a href="https://www.google.com/search?q=' + encodeURIComponent(term) + '" target="_blank" rel="noopener noreferrer">' +
             icon('link', 13) + '검색해보기</a></div>';
         }
+        var sc = scaleOf(c);
         return '<div class="s4-rate' + (known ? '' : ' unknown') + '">' +
           '<div class="s4-rate-top"><span class="s4-icon">' + icon(c.icon, 16) + '</span><span class="s4-name">' + esc(c.name) + '</span>' + tag + '</div>' +
-          '<div class="s4-stars" role="radiogroup" aria-label="' + esc(c.name) + ' 점수">' + stars +
+          '<div class="s4-stars" role="radiogroup" aria-label="' + esc(c.name) + ' 점수 (별 1개 ' + esc(sc[0]) + ', 별 5개 ' + esc(sc[1]) + ')">' + stars +
             '<button type="button" class="s4-unknown' + (known ? '' : ' on') + '" data-unknown="' + esc(c.id) + '" aria-pressed="' + !known + '">모름</button>' +
             (known ? '<span class="s4-num">' + Math.round(v) + '점</span>' : '') +
-          '</div>' + ask +
+          '</div>' +
+          // 별 아래 양 끝 표시: 기준마다 별 1개·5개가 무슨 뜻인지 (예: 비쌈 ←→ 저렴함)
+          '<div class="s4-scale" aria-hidden="true"><span>' + esc(sc[0]) + '</span><i></i><span>' + esc(sc[1]) + '</span></div>' + ask +
         '</div>';
       }).join('');
+      drawNote();
+    }
+
+    /* 설명을 썼는데 점수가 안 바뀌는 이유를 알려 주는 안내 (10/06 조원 피드백: "좋다/나쁘다를 써도 그대로라 헷갈림")
+       ① 예시 자료 점수: 설명글이 덮어쓰지 않음 ② 기준 이름이 없어 어느 기준인지 모름 ③ 직접 고른 별점만 가리킴 */
+    function drawNote() {
+      var s = Pickwise.state, opt = s.options[current];
+      var note = q('note'), text = (s.info[opt] || '').trim();
+      var m = s.manual[opt] || {}, h = hits[opt] || {}, facts = (s.facts && s.facts[opt]) || {};
+      var msg = '';
+      var fromData = s.criteria.length && s.criteria.every(function (c) { return m[c.id] && facts[c.id] && facts[c.id].text; });
+      if (fromData) {
+        msg = '예시는 자료 수치로 점수가 정해져 있어서 설명을 고쳐도 바뀌지 않아요. 점수를 바꾸려면 아래 별을 눌러 주세요.';
+      } else if (text) {
+        var hit = s.criteria.filter(function (c) { return h[c.id]; });
+        if (!hit.length && s.criteria[0]) {
+          // 예시 기준은 비용·시간이 아닌 것으로 ("초기 비용이 좋아요"는 어색해서)
+          var ex = s.criteria.filter(function (c) { return ['저렴함', '짧음'].indexOf(scaleOf(c)[1]) < 0; })[0] || s.criteria[0];
+          msg = '어떤 기준인지 함께 적어 주세요. 예: "' + Pickwise.josa(ex.name, '이가') + ' 좋아요"';
+        } else if (hit.length && hit.every(function (c) { return m[c.id]; })) {
+          msg = '직접 고른 별점은 설명으로 바뀌지 않아요. 바꾸려면 아래 별을 눌러 주세요.';
+        }
+      }
+      note.hidden = !msg;
+      note.textContent = msg;
     }
 
     function drawFiles() {
