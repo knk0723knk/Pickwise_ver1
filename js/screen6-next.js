@@ -29,12 +29,25 @@
         hot: rel(item) > 0
       };
     });
-    // 데이터셋의 다음 결정(예시라면 그 예시의 것, 직접 입력이면 같은 분류의 것)을 맨 위에. 제목만 있으므로 선택지는 직접 입력
+    // 데이터셋의 다음 결정(예시라면 그 예시의 것, 직접 입력이면 맞는 시나리오의 것)을 맨 위에. 제목만 있으므로 선택지는 직접 입력
+    // 맞는 시나리오가 없으면 데이터셋 다음 결정을 쓰지 않는다 (10/06: 이직에 "운동 장비 구매", 냉장고에 "노트북 가방 선택"이 나오던 문제)
     var p = Pickwise.explain.presetOf(state);
     var sc = !p && Pickwise.matchScenario ? Pickwise.matchScenario(state) : '';
-    var titles = p ? p.sample.next : (sc ? Pickwise.data.criteria.scenarios[sc].next : ((Pickwise.data.datasetNext || {})[state.category] || []));
+    var titles = p ? p.sample.next : (sc ? Pickwise.data.criteria.scenarios[sc].next : []);
+    // 선택지 이름의 단어 (예: "한강 피크닉" → 한강·피크닉)
+    var words = function (name) { return String(name).split(/[\s()·,]+/).filter(function (w) { return w.length >= 2; }); };
+    var winWords = words(winner);
+    var loseWords = [];
+    state.options.forEach(function (o) { if (o !== winner) loseWords = loseWords.concat(words(o)); });
+    titles = titles.filter(function (t) {   // 1위가 아닌 선택지용 다음 결정은 뺀다 (예: 한강 피크닉이 1위인데 "볼 영화 선택")
+      return !loseWords.some(function (w) { return t.indexOf(w) > -1 && winWords.indexOf(w) < 0; });
+    });
     if (titles.length) {
-      var own = titles.map(function (t) { return { title: t, topic: winner + ' 다음 고민: ' + t, options: ['', ''], icon: 'spark', hot: true }; });
+      var own = titles.map(function (t) {
+        // "한강 피크닉" + "피크닉 장소 선택" → "한강 피크닉 장소 선택" (같은 단어 두 번 쓰지 않게)
+        var shared = winWords.filter(function (w) { return t.indexOf(w) === 0; })[0];
+        return { title: t, topic: winner + ' ' + (shared ? t.slice(shared.length).trim() : t), options: ['', ''], icon: 'spark', hot: true };
+      });
       items = own.concat(items).slice(0, 6);
     }
     return items;
@@ -85,7 +98,8 @@
     });
 
     function drawRecords() {
-      var recs = Pickwise.storage.list().slice(0, SHOW_HISTORY);
+      var all = Pickwise.storage.list(), recs = all.slice(0, SHOW_HISTORY);
+      var more = all.length > SHOW_HISTORY ? '<li class="empty">최근 ' + SHOW_HISTORY + '개만 보여요 (전체 ' + all.length + '개)</li>' : '';   // 10/06: 기록이 더 있다는 걸 알 수 있게
       q('records').innerHTML = recs.length
         ? recs.map(function (rec) {
             var mine = rec.id === Pickwise.state.decisionId;
@@ -94,7 +108,7 @@
                 '<small>' + esc(rec.date) + ' · 추천: ' + esc(rec.winner) +
                 (rec.parentTopic ? ' · 이전 고민: ' + esc(rec.parentTopic) : '') + (mine ? ' · 방금 한 결정' : '') + '</small></div>' +
               '<button type="button" data-rm="' + esc(rec.id) + '" aria-label="' + esc(rec.topic) + ' 기록 지우기">' + icon('x', 11) + '</button></li>';
-          }).join('')
+          }).join('') + more
         : '<li class="empty">아직 저장된 결정이 없어요.</li>';
     }
     q('records').addEventListener('click', function (e) {
