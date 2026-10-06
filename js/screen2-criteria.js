@@ -42,11 +42,13 @@
   /* 주제(+선택지 이름)에 hints 단어가 가장 많이 들어 있는 같은 분류의 시나리오 id. 하나도 없으면 '' */
   function matchScenario(state) {
     var all = Pickwise.data.criteria.scenarios || {};
+    var req = Pickwise.data.scenarioRequires || {};   // 꼭 있어야 하는 단어 (data/criteria-general.js)
     var text = (state.topic + ' ' + state.options.join(' ')).toLowerCase();
     var best = '', bestN = 0;
     Object.keys(all).forEach(function (id) {
       var sc = all[id];
       if (sc.category !== state.category) return;
+      if (req[id] && !req[id].some(function (w) { return text.indexOf(w) > -1; })) return;
       var n = sc.hints.filter(function (w) { return text.indexOf(w.toLowerCase()) > -1; }).length;
       if (n > bestN) { best = id; bestN = n; }
     });
