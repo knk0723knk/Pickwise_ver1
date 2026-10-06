@@ -64,6 +64,22 @@
 .s4-unknown.on { border-color: var(--muted); color: var(--fg); background: var(--line); }
 .s4-num { margin-left: auto; font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; }
 
+/* 별 아래 양 끝 표시 (예: 비쌈 ←→ 저렴함) — 별 5개 너비(34px × 5 + 간격)에 맞춤 (10/06) */
+.s4-scale {
+  width: 178px; display: flex; align-items: center; gap: 6px; margin-top: -4px;
+  font-size: 11.5px; color: var(--muted); font-weight: 600; white-space: nowrap;
+}
+.s4-scale i { flex: 1; min-width: 12px; height: 1px; background: var(--line); position: relative; }
+.s4-scale i::before, .s4-scale i::after { content: ''; position: absolute; top: -3px; border: 3.5px solid transparent; }
+.s4-scale i::before { left: -2px; border-right-color: var(--line); border-left-width: 0; }
+.s4-scale i::after { right: -2px; border-left-color: var(--line); border-right-width: 0; }
+
+/* 설명을 써도 점수가 안 바뀔 때 이유 안내 (10/06) */
+.s4-note {
+  margin: 0; padding: 8px 10px; border-radius: 10px; font-size: 12.5px; line-height: 1.5;
+  background: var(--accent-soft); color: var(--accent-strong); border: 1px solid var(--accent-line);
+}
+
 .s4-ask {
   display: flex; align-items: flex-start; gap: 6px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted);
 }
