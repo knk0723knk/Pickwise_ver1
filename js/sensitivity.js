@@ -50,6 +50,8 @@
       var f = flips[0];
       var list = f.dir === 'up' ? T.flip : (T.flipDown || T.flip);
       text = fill(list[seed.length % list.length], { crit: f.name, to: f.to, loser: f.newWinner, winner: current });
+    } else if (base.ranking.length > 1 && Math.abs(base.ranking[0].total - base.ranking[1].total) < 0.5 && T.tieStable) {
+      text = T.tieStable[0];   // 동점인데 "영화가 1위예요. 흔들리지 않는 결과예요"라고 하지 않게
     } else {
       text = fill(T.stable[0], { winner: current });
     }
