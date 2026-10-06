@@ -19,6 +19,11 @@
 .s4-tab.on .s4-tab-letter { background: var(--accent); color: var(--on-accent); }
 .s4-tab-name { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .s4-tab small { font-weight: 600; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+/* 휴대폰: 선택지가 3~4개면 이름이 "전..."처럼 잘려서, 채운 개수(4/4)를 이름 아래 줄로 내린다 (10/06) */
+@media (max-width: 420px) {
+  .s4-tab { flex-wrap: wrap; gap: 2px 4px; padding: 7px 6px; }
+  .s4-tab small { flex-basis: 100%; text-align: center; line-height: 1.2; }
+}
 
 .s4-panel { display: flex; flex-direction: column; gap: 22px; }
 .s4-text { align-items: flex-start; }

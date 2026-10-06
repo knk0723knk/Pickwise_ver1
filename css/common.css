@@ -145,6 +145,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 
 @media (min-width: 900px) {
   body { padding-block: 48px; }
-  .screen { padding: 28px 32px 32px; }
+  /* PC는 카드를 조금 넓게 (480 → 560px): 결과 그래프·선택지 탭이 덜 답답하게 (10/06) */
+  .screen { max-width: 560px; padding: 28px 32px 32px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

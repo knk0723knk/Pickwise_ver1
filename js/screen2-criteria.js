@@ -119,7 +119,7 @@
         '<div class="block-head"><span class="num">+</span><label for="s2-custom">기준 직접 추가</label></div>' +
         '<div class="s2-add">' +
           '<div class="field">' + icon('custom', 18) +
-            '<input id="s2-custom" type="text" maxlength="15" autocomplete="off" placeholder="예: 친구 추천, 사진 찍기 좋은 곳"></div>' +
+            '<input id="s2-custom" type="text" maxlength="15" autocomplete="off" placeholder="예: 친구 추천, 분위기"></div>' +
           '<button class="pill-btn s2-add-btn" type="button" data-s2="add">추가</button>' +
         '</div>' +
       '</section>' +
