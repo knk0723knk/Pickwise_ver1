@@ -28,6 +28,13 @@
     var sc = matchScenario(state);
     var src = sc ? all.scenarios[sc] : (all.categories[state.category] || all.categories.etc);
     var plain = function (list) { return list.map(function (c) { return { id: c.id, name: c.name, icon: c.icon, default: c.default }; }); };
+    var gen = !sc && (Pickwise.data.criteriaGeneral || {})[state.category];
+    if (gen) {
+      // 맞는 시나리오가 없으면 공통 기준만 데이터셋에서, 분류별 기준은 일반 기준(data/criteria-general.js)으로 (10/06)
+      // 데이터셋 분류 기준은 다른 시나리오용이라(예: 이직에 "1시간 소모 열량", 냉장고에 "노이즈 캔슬링") 보여주지 않는다
+      return { common: plain(src.common), own: plain(gen.main), main: plain(src.common.concat(gen.main)), more: plain(gen.more),
+               overlap: [], scenario: '' };
+    }
     return { common: plain(src.common), own: plain(src.main), main: plain(src.common.concat(src.main)), more: plain(src.more),
              overlap: src.overlap || [], scenario: sc ? all.scenarios[sc].title : '' };
   }

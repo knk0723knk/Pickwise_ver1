@@ -87,10 +87,12 @@
   function meta(c) {
     var all = Pickwise.data.criteria, cats = all.categories, found = null;
     var sc = Pickwise.matchScenario ? Pickwise.matchScenario(Pickwise.state) : '';
-    var pools = (sc ? [all.scenarios[sc]] : []).concat([cats[Pickwise.state.category]], Object.keys(cats).map(function (k) { return cats[k]; }));
-    pools.some(function (p) {   // 맞는 시나리오 → 지금 분류 → 나머지 분류 순서로 질문을 찾는다
+    var gen = Pickwise.data.criteriaGeneral || {};
+    var pools = (sc ? [all.scenarios[sc]] : []).concat([cats[Pickwise.state.category], gen[Pickwise.state.category]],
+      Object.keys(cats).map(function (k) { return cats[k]; }), Object.keys(gen).map(function (k) { return gen[k]; }));
+    pools.some(function (p) {   // 맞는 시나리오 → 지금 분류(데이터셋·일반 기준) → 나머지 분류 순서로 질문을 찾는다
       if (!p) return false;
-      found = p.common.concat(p.main, p.more).filter(function (x) { return x.id === c.id; })[0] || null;
+      found = (p.common || []).concat(p.main, p.more).filter(function (x) { return x.id === c.id; })[0] || null;
       return !!found;
     });
     if (!found && Pickwise.state.preset) {   // 데이터팀 예시 기준이면 그 설명을 질문으로
