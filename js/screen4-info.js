@@ -21,8 +21,13 @@
     return String(text || '')
       .replace(/([가-힣])고\s/g, function (m, ch) { return ch === '최' ? m : ch + '|'; })
       .split(/[|,.!?\n;]|지만|는데|그러나|하지만/)
-      .map(function (s) { return ' ' + s.trim() + ' '; })
+      .map(function (s) { return normalize(' ' + s.trim() + ' '); })
       .filter(function (s) { return s.trim(); });
+  }
+  /* 말끝이 바뀐 표현을 단어 목록의 어간으로 (예: "커요" → "크", "가까워요" → "가깝워요") — data/keywords.js forms */
+  function normalize(p) {
+    (Pickwise.data.keywords.forms || []).forEach(function (f) { p = p.split(f[0]).join(f[1]); });
+    return p;
   }
   function find(text, list) {
     for (var i = 0; i < (list || []).length; i++) if (text.indexOf(list[i]) > -1) return list[i];
@@ -36,7 +41,10 @@
   function keysOf(criterion) {
     var K = Pickwise.data.keywords, KD = Pickwise.data.keywordsDataset || {};
     if (criterion.custom) return { aliases: [criterion.name].concat(criterion.name.split(/\s+/)), pos: [], neg: [] };
-    return KD[criterion.id] || K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
+    var k = KD[criterion.id] || K.criteria[criterion.id] || { aliases: [criterion.name], pos: [], neg: [] };
+    var ex = (K.extra || {})[criterion.id];   // 자동 생성 단어에 덧붙이는 단어 (data/keywords.js extra)
+    if (!ex) return k;
+    return { aliases: k.aliases.concat(ex.aliases || []), pos: k.pos.concat(ex.pos || []), neg: k.neg.concat(ex.neg || []), needsAlias: k.needsAlias };
   }
   /* 문장 조각 안에서 이 기준을 가리키는 말 중 가장 긴 것의 길이 (없으면 0) */
   function aliasLen(p, k) {
