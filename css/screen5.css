@@ -17,6 +17,12 @@
 .s5-num { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .s5-num strong { font-size: 32px; font-weight: 800; color: var(--fg); letter-spacing: -.03em; margin-right: 2px; }
 .s5-score.win .s5-num strong { color: var(--accent-strong); }
+/* 선택지 3개: 휴대폰은 1위 카드를 맨 위 한 줄로, PC는 3개를 한 줄로 (10/06) */
+.s5-scores.three:not(.tie) .s5-score.win { grid-column: 1 / -1; order: -1; }
+@media (min-width: 900px) {
+  .s5-scores.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .s5-scores.three:not(.tie) .s5-score.win { grid-column: auto; order: 0; }
+}
 .s5-badge {
   margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 3px;
   background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 2px 8px;
@@ -82,7 +88,7 @@
 .s5-sens-panel { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
 .s5-sl { display: grid; grid-template-columns: minmax(0, 6em) minmax(0, 1fr) 2.6em; align-items: center; gap: 8px; font-size: 13px; }
 .s5-sl label { font-weight: 600; word-break: keep-all; }
-.s5-sl input { width: 100%; min-width: 0; accent-color: var(--accent); }
+.s5-sl input { width: 100%; min-width: 0; accent-color: var(--accent); height: 36px; margin: 0; touch-action: pan-y; }   /* 손가락으로 잡기 쉽게 (10/06) */
 .s5-sl output { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
 .s5-sens-msg { margin: 4px 0 0; font-size: 14px; }
 .s5-sens-msg.changed { color: var(--accent-strong); }

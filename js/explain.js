@@ -53,7 +53,7 @@
     var ahead = diffs.filter(function (d) { return d.diff > 0.05; }).sort(function (a, b) { return b.diff - a.diff; });
     var behind = diffs.filter(function (d) { return d.diff < -0.05; }).sort(function (a, b) { return a.diff - b.diff; });
     var gapRaw = win.total - lose.total;
-    var gap = Math.round(gapRaw);
+    var gap = win.score - lose.score;   // 화면에 보이는 점수끼리의 차이 (따로 반올림하면 "60점, 57점으로 2점 앞서요"처럼 어긋남)
 
     // 1위와 점수가 같은 선택지 모두 (선택지가 3~4개여도 빠짐없이)
     var tiedNames = result.ranking.filter(function (o) { return Math.abs(o.total - win.total) < 0.5; }).map(function (o) { return o.name; });
@@ -72,6 +72,7 @@
     // 한 줄 요약
     var summary;
     if (gapRaw < 0.5) summary = pick(T.summary.tie, seed);
+    else if (gap < 1 && T.summary.closeZero) summary = pick(T.summary.closeZero, seed);   // 반올림하면 같은 점수
     else if (gap < 5) summary = pick(T.summary.close, seed);
     else if (ahead.length >= 2) summary = pick(T.summary.two, seed);
     else summary = pick(T.summary.one, seed);
@@ -79,12 +80,14 @@
     // AI 설명 (2~3문장)
     var explain = [];
     if (gapRaw >= 0.5) {
-      explain.push(pick(T.explain.lead, seed));
+      explain.push(gap < 1 ? T.explain.lead[T.explain.lead.length - 1] : pick(T.explain.lead, seed));   // "0점 앞서요" 대신 점수만
       if (ahead.length) explain.push(pick(T.explain.reason, seed));
       explain.push(behind.length ? pick(T.explain.counter, seed) : pick(T.explain.nocounter, seed));
     } else {
-      explain.push(pick(T.summary.tie, seed));
-      if (behind.length || ahead.length) explain.push(pick(T.explain.counter, seed));
+      // 동점: 요약과 같은 문장을 반복하지 않고, 어디서 서로 앞섰는지를 말한다
+      if (ahead.length && behind.length && T.explain.tieDetail) explain.push(pick(T.explain.tieDetail, seed));
+      else if (T.explain.tieSame) explain.push(pick(T.explain.tieSame, seed));
+      else explain.push(pick(T.summary.tie, seed));
     }
 
     // 차이가 큰 기준 (별점 차이 기준, 최대 3개)
@@ -104,7 +107,8 @@
     };
     var p = presetOf(state);
     if (p && p.unchanged) {
-      out.summary = p.sample.analysis.summary || out.summary;
+      // "핵심 이유"는 규칙 문장을 쓴다 (10/06): 데이터팀 요약("현재 선택한 객관 기준과 기본 중요도에서는 …총점이 가장 높아요")은
+      // 이유가 아니라 결과만 말하고, 같은 내용이 아래 설명 첫 문장에도 있음. 데이터팀 설명(수치 포함)은 AI 설명 상자에 그대로 쓴다
       if (p.sample.analysis.explanation) out.explain = [p.sample.analysis.explanation];
       out.ruleNote = T.presetNote || out.ruleNote;
       out.preset = { sample: p.sample };

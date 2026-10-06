@@ -94,7 +94,8 @@
 
     el.innerHTML =
       '<div class="s5-head"><h2>' + esc(state.topic) + '</h2><p>입력한 기준과 중요도로 ' + state.options.length + '개 선택지를 비교했어요.</p></div>' +
-      '<div class="s5-scores" style="--n:' + Math.min(state.options.length, 2) + '">' + cards + '</div>' +
+      // 선택지 3개: 2+1로 놓이면 빈칸이 생겨서, 휴대폰은 1위 카드를 맨 위 한 줄로·PC는 3개를 한 줄로 (screen5.css .three)
+      '<div class="s5-scores' + (state.options.length === 3 ? ' three' + (tie ? ' tie' : '') : '') + '" style="--n:' + Math.min(state.options.length, 2) + '">' + cards + '</div>' +
       '<section class="s5-summary">' + icon('bulb', 18) + '<div><div class="s5-summary-title">' +
         (tie ? '결과 요약' : esc(Pickwise.josa(winner.name, '이가')) + ' 더 나은 핵심 이유') + '</div><p>' + esc(t.summary) + '</p></div></section>' +
 
