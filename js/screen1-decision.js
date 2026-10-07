@@ -84,18 +84,40 @@
   }
   Pickwise.loadSample = loadSample;
 
+  /* "이런 고민일 때 써 보세요" — 누르면 해당 예시를 바로 불러온다 (예시가 없으면 표시하지 않음) */
+  var USES = [
+    { sample: 'travel_domestic', icon: 'plane',  text: '여행지 두세 곳 중 고민될 때' },
+    { sample: 'laptop_purchase', icon: 'star',   text: '노트북 모델을 고를 때' },
+    { sample: 'savings_choice',  icon: 'wallet', text: '첫 월급, 예금 vs 적금' },
+    { sample: 'exercise_choice', icon: 'heart',  text: '퇴근 후 운동을 고를 때' }
+  ];
+  function usesHtml() {
+    var have = (Pickwise.data.samples || []).map(function (s) { return s.id; });
+    return USES.filter(function (u) { return have.indexOf(u.sample) > -1; }).map(function (u) {
+      return '<button type="button" class="s1-use" data-sample="' + u.sample + '">' +
+        Pickwise.icon(u.icon, 16) + '<span>' + Pickwise.esc(u.text) + '</span></button>';
+    }).join('');
+  }
+
   function render(el, state) {
     el.innerHTML =
       '<div class="s1-intro">' + ICON_BULB +
         '<h2>어떤 결정이 고민되세요?</h2>' +
-        '<p>비교하고 싶은 주제와 선택지를 입력하면<br>내 기준에 맞는 선택을 함께 정리해 드려요.</p>' +
-        '<button class="s1-demo" type="button" data-s1="demo-toggle" aria-expanded="false">' + ICON_PLAY + '예시로 체험하기</button>' +
+        '<p>내 기준으로 선택지를 비교하고, 왜 그게 더 나은지까지 정리해 드려요.</p>' +
       '</div>' +
+      // 크로스 피드백 반영 (10/07): 어떤 상황에 쓰는 앱인지 바로 보이게 + 예시 체험을 더 눈에 띄게
+      '<section class="s1-uses" aria-labelledby="s1-uses-title">' +
+        '<div class="s1-uses-title" id="s1-uses-title">이런 고민일 때 써 보세요</div>' +
+        '<div class="s1-use-list" data-s1="uses">' + usesHtml() + '</div>' +
+        '<button class="s1-demo" type="button" data-s1="demo-toggle" aria-expanded="false">' + ICON_PLAY + '예시로 바로 체험하기</button>' +
+        '<p class="s1-time">6단계 · 약 3분이면 끝나요</p>' +
+      '</section>' +
       '<section class="s1-samples" data-s1="samples" hidden>' +
         '<div class="s1-samples-title">체험할 예시를 골라 주세요</div>' +
         samplesHtml() +
         '<p class="rule-note">공개 자료로 만든 비교 예시예요. 일부 값은 추정값이라 실제와 다를 수 있어요.</p>' +
       '</section>' +
+      '<div class="s1-divider"><span>또는 내 고민 직접 입력하기</span></div>' +
       '<section class="block">' +
         '<div class="block-head"><span class="num">1</span><label for="s1-topic">결정 주제 입력</label></div>' +
         '<div class="field" data-s1="topic-field">' + ICON_DOC +
@@ -199,7 +221,7 @@
       b.setAttribute('aria-expanded', String(!p.hidden));
     });
 
-    q('samples').addEventListener('click', function (e) {
+    function pickSample(e) {
       var b = e.target.closest('[data-sample]');
       if (!b) return;
       var id = b.getAttribute('data-sample');
@@ -215,8 +237,10 @@
       clearErrors();
       renderOptions();
       renderDetect();
-      Pickwise.toast('예시를 채웠어요. 다음 화면들도 예시 내용으로 이어져요.');
-    });
+      Pickwise.toast('예시를 채웠어요. 아래 "다음"을 눌러 이어서 체험해 보세요.');
+    }
+    q('samples').addEventListener('click', pickSample);
+    q('uses').addEventListener('click', pickSample);   // "이런 고민일 때" 상황을 누르면 그 예시로 바로 채움
 
     renderOptions();
     renderDetect();

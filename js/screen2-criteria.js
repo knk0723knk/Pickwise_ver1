@@ -97,6 +97,9 @@
         '<p><span class="chip">' + esc(catName(state)) + '</span> ' +
           '고민에 자주 쓰는 기준을 골라 두었어요.' +
           ' 더 고르거나 직접 추가해 보세요.</p>' +
+        // 크로스 피드백 반영 (10/07): 직접 입력일 때 추천 기준이 맞지 않을 수 있음을 안내, 간편 모드 대신 적게 골라도 된다고 안내
+        (state.preset ? '' :
+          '<p class="s2-tip">' + icon('bulb', 14) + '<span>추천 기준이 내 고민과 맞지 않으면 체크를 풀고, 아래 <b>기준 직접 추가</b>에서 내 기준을 넣어 주세요. 2~3개만 골라도 충분해요.</span></p>') +
       '</div>' +
       '<div class="s2-count" data-s2="count" aria-live="polite"></div>' +
       '<div class="s2-cards" data-s2="cards">' +

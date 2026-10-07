@@ -70,6 +70,64 @@
 
     var anyUnknown = r.options.some(function (o) { return o.unknown.length > 0; });
 
+    /* ---------- 점수 계산 근거 (10/07 크로스 피드백: "점수가 어떻게 매겨지는지 설명이 더 있으면") ---------- */
+    var calcHtml = (function () {
+      var hasFacts = state.criteria.some(function (c) {
+        return state.options.some(function (o) { var f = state.facts && state.facts[o] && state.facts[o][c.id]; return f && f.text && !f.edited; });
+      });
+      // 실제 수치가 있는 기준 하나로 예를 든다 (가장 높은 점수 / 가장 낮은 점수)
+      var exLine = '';
+      if (hasFacts) {
+        state.criteria.some(function (c) {
+          var rows = state.options.map(function (o) {
+            var f = state.facts && state.facts[o] && state.facts[o][c.id];
+            var v = state.ratings[o] && state.ratings[o][c.id];
+            return f && f.text && !f.edited && typeof v === 'number' ? { o: o, text: f.text, v: v } : null;
+          }).filter(Boolean);
+          if (rows.length < 2) return false;
+          rows.sort(function (a, b) { return b.v - a.v; });
+          var hi = rows[0], lo = rows[rows.length - 1];
+          if (hi.v === lo.v) return false;
+          exLine = '예) ' + c.name + ': ' + hi.o + ' ' + hi.text + ' → ' + Math.round(hi.v) + '점, ' + lo.o + ' ' + lo.text + ' → ' + Math.round(lo.v) + '점';
+          return true;
+        });
+      }
+      var step1 = hasFacts
+        ? '<p><b>① 기준 점수 (0~100)</b> 선택지끼리 실제 수치를 비교해서, 가장 유리한 쪽이 100점, 가장 불리한 쪽이 0점, 그 사이는 차이만큼 비율로 정해요.' +
+            (exLine ? '<br><span class="s5-calc-ex">' + esc(exLine) + '</span>' : '') +
+            (state.options.length === 2 ? '<br>선택지가 2개면 한쪽은 100점, 다른 쪽은 0점이 돼요. 그래서 실제 차이가 작아도 점수 차이는 크게 보일 수 있어요. 막대 아래 실제 수치를 함께 봐 주세요.' : '') + '</p>'
+        : '<p><b>① 기준 점수 (0~100)</b> 설명글에서 찾은 표현이나 직접 고른 별로 정해요. 별 1개 0점 · 2개 25점 · 3개 50점(보통) · 4개 75점 · 5개 100점이고, 모름은 50점으로 계산해요.</p>';
+      var step2 = '<p><b>② 비중</b> 기준마다 정한 중요도를 모두 더한 값 중에서 그 기준이 차지하는 몫이에요.</p>';
+      var w = r.ranking[0];
+      var parts = state.criteria.map(function (c) {
+        return c.name + ' ' + Math.round(w.per[c.id].used) + '점×' + r.shares[c.id] + '%';
+      });
+      var step3 = '<p><b>③ 종합 점수</b> 기준 점수 × 비중을 모두 더해요.<br><span class="s5-calc-ex">' +
+        esc(w.name + ': ' + parts.join(' + ') + ' = ' + w.score + '점') + '</span></p>';
+      return '<details class="s5-box s5-calc"><summary class="s5-box-title">' + icon('chart', 16) + '점수는 이렇게 계산했어요</summary>' +
+        step1 + step2 + step3 + '</details>';
+    })();
+
+    /* ---------- 결과 복사·공유용 글 (10/07 크로스 피드백: 친구·가족과 함께 결정할 때) ---------- */
+    function shareText() {
+      var lines = ['[Pickwise] ' + state.topic];
+      lines.push(tie ? '결과: 점수가 같아요' : '추천: ' + winner.name + ' (' + winner.score + '점)');
+      lines.push('점수: ' + r.ranking.map(function (o) { return o.name + ' ' + o.score + '점'; }).join(' · '));
+      lines.push((tie ? '요약: ' : '핵심 이유: ') + t.summary);
+      lines.push('');
+      lines.push('기준별 점수 (비중)');
+      state.criteria.forEach(function (c) {
+        lines.push('- ' + c.name + ' (' + r.shares[c.id] + '%): ' + r.options.map(function (o) {
+          var p = o.per[c.id];
+          return o.name + ' ' + (p.rating === null ? '모름' : Math.round(p.rating));
+        }).join(' · '));
+      });
+      lines.push('');
+      lines.push('나도 비교해 보기: https://pickwisever1.vercel.app');
+      return lines.join('\n');
+    }
+    var canShare = !!navigator.share && window.matchMedia && window.matchMedia('(pointer: coarse)').matches;   // 휴대폰에서만 "공유하기"
+
     /* ---------- 가장 큰 차이 ---------- */
     var biggest = t.biggest.length
       ? t.biggest.map(function (b) {
@@ -99,11 +157,18 @@
       '<section class="s5-summary">' + icon('bulb', 18) + '<div><div class="s5-summary-title">' +
         (tie ? '결과 요약' : esc(Pickwise.josa(winner.name, '이가')) + ' 더 나은 핵심 이유') + '</div><p>' + esc(t.summary) + '</p></div></section>' +
 
+      '<div class="s5-share">' +
+        '<button type="button" class="pill-btn" data-s5="copy">' + icon('doc', 14) + '결과 복사하기</button>' +
+        (canShare ? '<button type="button" class="pill-btn" data-s5="share">' + icon('link', 14) + '공유하기</button>' : '') +
+      '</div>' +
+      '<textarea class="s5-share-text" data-s5="share-text" readonly hidden aria-label="복사할 결과"></textarea>' +
+
       '<section class="s5-box"><div class="s5-box-title">' + icon('chart', 16) + '항목별 비교</div>' +
         // 그래프 읽는 법은 그래프보다 먼저 (제목 바로 아래)
         '<p class="hint s5-howto">기준별 점수(100점 만점)예요. 비중이 클수록 종합 점수에 크게 반영돼요.</p>' +
         '<div class="s5-legend">' + legend + (anyUnknown ? '<span><i class="s5-key-unknown"></i>모름 (50점으로 계산)</span>' : '') + '</div>' +
         rows + '</section>' +
+      calcHtml +
 
       '<section class="s5-box"><div class="s5-box-title">' + icon('target', 16) + '가장 큰 차이</div><div class="s5-diffs">' + biggest + '</div></section>' +
 
@@ -149,6 +214,34 @@
     var q = function (n) { return el.querySelector('[data-s5="' + n + '"]'); };
 
     if (q('goto4')) q('goto4').addEventListener('click', function () { Pickwise.back(); });
+
+    /* ---------- 결과 복사·공유 ---------- */
+    function showManualCopy(text) {
+      // 새 복사 방법이 막힌 환경(일부 브라우저·앱 안 브라우저·파일로 연 경우): 예전 복사 방법을 한 번 더 시도하고,
+      // 그래도 안 되면 글을 보여주고 직접 복사하게
+      var ta = q('share-text');
+      ta.value = text; ta.hidden = false; ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      if (ok) {
+        ta.hidden = true;
+        Pickwise.toast('결과를 복사했어요. 카톡이나 메모에 붙여넣어 보세요.');
+      } else {
+        Pickwise.toast('아래 글을 길게 눌러(또는 Ctrl+C) 복사해 주세요.');
+      }
+    }
+    q('copy').addEventListener('click', function () {
+      var text = shareText();
+      var done = function () { Pickwise.toast('결과를 복사했어요. 카톡이나 메모에 붙여넣어 보세요.'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { showManualCopy(text); });
+      } else {
+        showManualCopy(text);
+      }
+    });
+    if (q('share')) q('share').addEventListener('click', function () {
+      navigator.share({ title: 'Pickwise 결과', text: shareText() }).catch(function () { /* 사용자가 공유 창을 닫은 경우 */ });
+    });
 
     /* ---------- 민감도: 중요도를 바꿔 보는 슬라이더 (원래 설정은 바뀌지 않음) ---------- */
     var trial = {};
