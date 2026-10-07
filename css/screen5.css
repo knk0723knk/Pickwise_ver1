@@ -124,8 +124,26 @@
 }
 
 /* 결과 복사·공유 + 점수 계산 근거 (10/07 크로스 피드백 반영) */
-.s5-share { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: -10px; }
-.s5-share .pill-btn { padding: 8px 14px; font-size: 13.5px; }
+/* 결과 공유 상자 — 핵심 이유 바로 아래, 눈에 띄게 (10/07) */
+.s5-sharebox {
+  border: 1.5px solid var(--accent); background: var(--accent-soft); border-radius: 14px;
+  padding: 14px; display: flex; flex-direction: column; gap: 8px; margin-top: -8px;
+}
+.s5-sharebox-title { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 15px; color: var(--accent-strong); }
+.s5-sharebox > p { margin: 0; font-size: 13.5px; color: var(--fg); }
+.s5-share-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.s5-share-main {
+  flex: 1 1 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border: 0; border-radius: 12px; padding: 12px 14px; background: var(--accent); color: var(--on-accent);
+  font: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+}
+.s5-share-main:hover { background: var(--accent-strong); }
+.s5-share-sub {
+  flex: 1 1 100%; display: flex; align-items: center; justify-content: center; gap: 4px;
+  border: 1px solid var(--accent-line); border-radius: 12px; padding: 9px 10px; background: var(--card); color: var(--accent-strong);
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.s5-share-note { margin: 0 !important; font-size: 12px !important; color: var(--muted) !important; }
 .s5-share-text {
   width: 100%; min-height: 140px; margin-top: -10px; border: 1px solid var(--line); border-radius: 10px;
   padding: 10px; font: inherit; font-size: 12.5px; color: var(--fg); background: var(--field); resize: vertical;

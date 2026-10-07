@@ -157,10 +157,19 @@
       '<section class="s5-summary">' + icon('bulb', 18) + '<div><div class="s5-summary-title">' +
         (tie ? '결과 요약' : esc(Pickwise.josa(winner.name, '이가')) + ' 더 나은 핵심 이유') + '</div><p>' + esc(t.summary) + '</p></div></section>' +
 
-      '<div class="s5-share">' +
-        '<button type="button" class="pill-btn" data-s5="copy">' + icon('doc', 14) + '결과 복사하기</button>' +
-        (canShare ? '<button type="button" class="pill-btn" data-s5="share">' + icon('link', 14) + '공유하기</button>' : '') +
-      '</div>' +
+      // 결과 공유 상자 (10/07: 더 눈에 띄게. 휴대폰은 기본 공유 창 → 카카오톡·인스타그램 DM 등 앱 선택)
+      '<section class="s5-sharebox">' +
+        '<div class="s5-sharebox-title">' + icon('users', 18) + '친구·가족과 함께 결정해 보세요</div>' +
+        '<p>점수·핵심 이유·기준별 비교를 짧은 글로 정리해 드려요.</p>' +
+        '<div class="s5-share-btns">' +
+          (canShare
+            ? '<button type="button" class="s5-share-main" data-s5="share">' + icon('link', 16) + '결과 공유하기</button>' +
+              '<button type="button" class="s5-share-sub" data-s5="copy">' + icon('doc', 14) + '복사만 하기</button>'
+            : '<button type="button" class="s5-share-main" data-s5="copy">' + icon('doc', 16) + '결과 복사하기</button>') +
+        '</div>' +
+        (canShare ? '<p class="s5-share-note">공유 창에서 카카오톡·인스타그램 DM 등을 고르세요. 글이 빠지면 대화창에 붙여넣기 하면 돼요(미리 복사해 둬요).</p>'
+                  : '<p class="s5-share-note">복사한 글을 카카오톡이나 메모에 붙여넣으면 돼요.</p>') +
+      '</section>' +
       '<textarea class="s5-share-text" data-s5="share-text" readonly hidden aria-label="복사할 결과"></textarea>' +
 
       '<section class="s5-box"><div class="s5-box-title">' + icon('chart', 16) + '항목별 비교</div>' +
@@ -239,8 +248,24 @@
         showManualCopy(text);
       }
     });
+    /* 공유하기: ① 결과 글을 먼저 몰래 복사해 두고 (인스타 DM 등은 글을 빼고 링크만 받기도 해서)
+                 ② 휴대폰 기본 공유 창을 띄운다 → 사용자가 카카오톡·인스타그램 DM·문자 등을 고름 */
+    function silentCopy(text) {
+      try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).catch(function () {}); return; } } catch (e) {}
+      try {
+        var tmp = document.createElement('textarea');
+        tmp.value = text; tmp.setAttribute('readonly', ''); tmp.style.position = 'fixed'; tmp.style.left = '-9999px';
+        document.body.appendChild(tmp); tmp.select(); document.execCommand('copy'); document.body.removeChild(tmp);
+      } catch (e) {}
+    }
     if (q('share')) q('share').addEventListener('click', function () {
-      navigator.share({ title: 'Pickwise 결과', text: shareText() }).catch(function () { /* 사용자가 공유 창을 닫은 경우 */ });
+      var text = shareText().replace(/\n+나도 비교해 보기: \S+$/, '');   // 주소는 따로 넘김(앱이 링크 미리보기로 보여줌)
+      silentCopy(text + '\n\n나도 비교해 보기: https://pickwisever1.vercel.app');
+      navigator.share({ title: 'Pickwise 결과 · ' + state.topic, text: text, url: 'https://pickwisever1.vercel.app' })
+        .catch(function (err) {
+          if (err && err.name === 'AbortError') return;   // 사용자가 공유 창을 닫은 경우
+          Pickwise.toast('공유 창을 열 수 없어서 결과를 복사해 뒀어요. 대화창에 붙여넣어 주세요.');
+        });
     });
 
     /* ---------- 민감도: 중요도를 바꿔 보는 슬라이더 (원래 설정은 바뀌지 않음) ---------- */
